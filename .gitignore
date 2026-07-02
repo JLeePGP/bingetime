@@ -11,3 +11,7 @@ Desktop.ini
 # Temp / office lock files
 ~$*
 *.tmp
+
+# Spec files (kept locally, not tracked)
+BingeTime-Spec.docx
+BingeTime-Spec.md
