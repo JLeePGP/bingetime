@@ -1,0 +1,15 @@
+<a class="show-card" href="/shows/{{ show.id }}">
+  <div class="poster">
+    {% if show.poster_url %}
+      <img src="{{ show.poster_url }}" alt="{{ show.title }} poster" loading="lazy">
+    {% else %}
+      <div class="poster-placeholder">{{ show.title[:1]|upper }}</div>
+    {% endif %}
+    {% if show.has_creator_video %}<span class="badge badge-video" title="Has a video breakdown" aria-label="Has a video breakdown">▶</span>{% endif %}
+    <span class="badge badge-cat">{{ show.category|category_label }}</span>
+  </div>
+  <div class="show-card-body">
+    <h3>{{ show.title }}</h3>
+    <p class="runtime">{{ show.computed_runtime_min|humanize_runtime }}</p>
+  </div>
+</a>

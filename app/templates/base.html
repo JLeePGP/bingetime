@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block page_title %}{{ title }}{% endblock %} · BingeTime</title>
+  <meta name="description" content="{% block meta_description %}Find out how long it takes to binge any show, watch the original viral breakdown, and plan your watch schedule.{% endblock %}">
+  <link rel="stylesheet" href="/static/css/styles.css">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="/">Binge<span>Time</span></a>
+      <nav class="nav">
+        <a href="/shows">Catalog</a>
+        <a href="/calculator">Calculator</a>
+        <a href="/planner">Planner</a>
+        <a href="/stories">Stories</a>
+        {% if is_admin %}<a href="/account/moderation">Moderate</a>{% endif %}
+      </nav>
+      <form class="nav-search" action="/shows" method="get" role="search">
+        <input type="search" name="q" placeholder="Search shows…" aria-label="Search shows">
+      </form>
+      <div class="nav-account">
+        {% if current_user %}
+          <a href="/account">{{ current_user.display_name }}</a>
+          <form action="/account/logout" method="post"><button class="btn-link" type="submit">Log out</button></form>
+        {% else %}
+          <a href="/account/login">Log in</a>
+          <a class="btn btn-small" href="/account/signup">Sign up</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <span class="footer-copy">© 2026 BingeTime</span>
+      <nav class="footer-links">
+        <a href="/shows">Catalog</a>
+        <a href="/calculator">Calculator</a>
+        <a href="/planner">Planner</a>
+        <a href="/stories">Stories</a>
+      </nav>
+    </div>
+  </footer>
+  {% block body_extra %}{% endblock %}
+</body>
+</html>

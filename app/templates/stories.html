@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="tool-page">
+  <h1>Binge stories</h1>
+  <p class="lede">The best, worst, and most unhinged binges from the community. Submissions are reviewed before they go public.</p>
+
+  {% if submitted %}
+  <p class="flash">Thanks! Your story is in the queue for review.</p>
+  {% endif %}
+
+  <div class="story-form">
+    <h2>Share your binge story</h2>
+    <form action="/stories" method="post">
+      <label>Your story
+        <textarea name="story_text" rows="5" maxlength="5000" required placeholder="I finished all of One Piece in…"></textarea>
+      </label>
+      <label>Show (optional)
+        <select name="show_id">
+          <option value="">— not listed / n/a —</option>
+          {% for s in shows %}<option value="{{ s.id }}">{{ s.title }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Display name (optional — anonymous by default)
+        <input type="text" name="display_name" maxlength="80" placeholder="Anonymous">
+      </label>
+      <button type="submit">Submit story</button>
+    </form>
+  </div>
+</section>
+
+<section class="stories-feed">
+  {% if stories %}
+    {% for story in stories %}
+    <blockquote class="story">
+      <p>{{ story.story_text }}</p>
+      <footer>— {{ story.display_name or "Anonymous" }}</footer>
+    </blockquote>
+    {% endfor %}
+  {% else %}
+    <p class="empty">No stories published yet. Be the first!</p>
+  {% endif %}
+</section>
+{% endblock %}

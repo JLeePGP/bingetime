@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="catalog-head">
+  <h1>Show catalog</h1>
+  <form class="filters" action="/shows" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search by title…" aria-label="Search by title">
+    <select name="category" aria-label="Category">
+      <option value="">All categories</option>
+      {% for c in categories %}
+        <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c|category_label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Filter</button>
+  </form>
+  <p class="result-count">{{ total }} show{{ '' if total == 1 else 's' }}</p>
+</section>
+
+{% if shows %}
+  <div class="grid">
+    {% for show in shows %}{% include "_show_card.html" %}{% endfor %}
+  </div>
+
+  {% if total_pages > 1 %}
+  <nav class="pagination">
+    {% set qs = "&q=" ~ q if q else "" %}
+    {% set cs = "&category=" ~ category if category else "" %}
+    {% if page > 1 %}<a href="/shows?page={{ page - 1 }}{{ qs }}{{ cs }}">← Prev</a>{% endif %}
+    <span>Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}<a href="/shows?page={{ page + 1 }}{{ qs }}{{ cs }}">Next →</a>{% endif %}
+  </nav>
+  {% endif %}
+{% else %}
+  <p class="empty">No shows match. Try a different search.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+{% set show = prefill %}
+<section class="tool-page">
+  <h1>Plan your binge</h1>
+  <p class="lede">Tell us how many hours a week you can watch, and we'll tell you the finish-by date — then drop it on your calendar.</p>
+
+  {% include "_planner_widget.html" with context %}
+
+  {% if show %}
+    {% if current_user %}
+    <form class="planner-save" action="/account/shows/{{ show.id }}/planner" method="post">
+      <input type="hidden" name="redirect_to" value="/planner?show={{ show.id }}">
+      <label>Save this plan to your account — hours/week
+        <input type="number" name="hours_per_week" min="0.5" max="168" step="0.5" value="7" required>
+      </label>
+      <button type="submit">Save to my binges</button>
+    </form>
+    {% else %}
+    <p class="hint"><a href="/account/login?next=/planner?show={{ show.id }}">Log in</a> to save this plan to your account.</p>
+    {% endif %}
+  {% endif %}
+
+  {% if not show %}
+  <p class="hint">Tip: open any <a href="/shows">show in the catalog</a> to plan its exact runtime.</p>
+  {% endif %}
+</section>
+{% endblock %}
+{% block body_extra %}<script src="/static/js/planner.js"></script>{% endblock %}

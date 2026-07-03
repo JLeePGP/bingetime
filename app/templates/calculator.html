@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+{% set show = prefill %}
+<section class="tool-page">
+  <h1>How long to binge?</h1>
+  <p class="lede">Enter a runtime (or start from a show) and see it in hours, days, and weeks — with a rewatch multiplier for the real damage.</p>
+  {% include "_calculator_widget.html" with context %}
+  {% if not prefill %}
+  <p class="hint">Tip: open any <a href="/shows">show in the catalog</a> to prefill its runtime automatically.</p>
+  {% endif %}
+</section>
+{% endblock %}
+{% block body_extra %}<script src="/static/js/calculator.js"></script>{% endblock %}

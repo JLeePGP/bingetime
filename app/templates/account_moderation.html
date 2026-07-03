@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="tool-page">
+  <h1>Story moderation</h1>
+  <p class="lede">{{ pending|length }} pending submission{{ '' if pending|length == 1 else 's' }}.</p>
+
+  {% if pending %}
+    {% for story in pending %}
+    <div class="mod-card">
+      <p>{{ story.story_text }}</p>
+      <footer>
+        — {{ story.display_name or "Anonymous" }}
+        {% if story.show_id %}· show: {{ story.show_id }}{% endif %}
+        · {{ story.submitted_at.date() }}
+      </footer>
+      <form class="mod-actions" action="/account/moderation/{{ story.id }}" method="post">
+        <button name="decision" value="approve" type="submit">Approve</button>
+        <button name="decision" value="reject" type="submit" class="btn-secondary">Reject</button>
+      </form>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="empty">Queue is empty. 🎉</p>
+  {% endif %}
+</section>
+{% endblock %}

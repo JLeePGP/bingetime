@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="auth-page">
+  <h1>Create your account</h1>
+  <p class="lede">Save shows, track what you've watched, and keep your binge plans.</p>
+  {% if error %}<p class="flash flash-error">{{ error }}</p>{% endif %}
+  <form class="auth-form" action="/account/signup" method="post">
+    <label>Email
+      <input type="email" name="email" value="{{ email or '' }}" required autocomplete="email">
+    </label>
+    <label>Password
+      <input type="password" name="password" required minlength="8" autocomplete="new-password">
+      <small>At least 8 characters.</small>
+    </label>
+    <label>Display name (optional)
+      <input type="text" name="display_name" maxlength="80" autocomplete="nickname">
+    </label>
+    <button type="submit">Sign up</button>
+  </form>
+  <p class="hint">Already have an account? <a href="/account/login">Log in</a>.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+{# Reusable binge planner. If `show` is defined+non-null with a runtime, that
+   runtime is fixed; otherwise the user types one. Driven by /static/js/planner.js #}
+<div class="planner"
+     data-base-min="{% if show is defined and show and show.total_runtime_min %}{{ show.total_runtime_min }}{% else %}0{% endif %}"
+     data-show-title="{% if show is defined and show %}{{ show.title }}{% else %}your show{% endif %}">
+  <div class="calc-inputs">
+    {% if show is defined and show and show.total_runtime_min %}
+      <p class="calc-fixed">Total runtime: <strong>{{ show.total_runtime_min|humanize_runtime }}</strong> for {{ show.title }}</p>
+    {% else %}
+      <label>Total runtime (minutes)
+        <input type="number" name="total_runtime_min" min="0" step="1" placeholder="e.g. 6120">
+      </label>
+    {% endif %}
+    <label>Hours per week you can watch
+      <input type="number" name="hours_per_week" min="0.5" max="168" step="0.5" value="7">
+    </label>
+  </div>
+
+  <div class="planner-results" hidden>
+    <p class="finish-headline">Finish by <strong data-out="finish_date">—</strong></p>
+    <p class="planner-detail"><span data-out="weeks_needed">—</span> weeks · <span data-out="days_needed">—</span> days total</p>
+    <a class="btn" data-ics href="#" download>⬇ Add to calendar (.ics)</a>
+  </div>
+</div>

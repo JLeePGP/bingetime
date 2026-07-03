@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block page_title %}How long to binge any show?{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>How long does it take to binge any show?</h1>
+  <p class="lede">Find the total watch time, see the original video breakdown, and plan your binge schedule.</p>
+  <div class="hero-search">
+    <form action="/shows" method="get" role="search">
+      <input type="search" name="q" placeholder="Search a show — One Piece, Breaking Bad…" aria-label="Search shows">
+      <button type="submit">Search</button>
+    </form>
+  </div>
+</section>
+
+{% if featured %}
+<section>
+  <h2>Featured shows</h2>
+  <div class="grid">
+    {% for show in featured %}{% include "_show_card.html" %}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if stories %}
+<section class="stories-carousel-section">
+  <div class="section-head">
+    <h2>Binge stories</h2>
+    <a class="section-link" href="/stories">Read more &amp; share yours →</a>
+  </div>
+  <div class="stories-carousel" data-carousel>
+    <div class="stories-track">
+      {% for story in stories %}
+      <blockquote class="story-slide">
+        <p>{{ story.story_text }}</p>
+        <footer>— {{ story.display_name or "Anonymous" }}</footer>
+      </blockquote>
+      {% endfor %}
+    </div>
+    {% if stories|length > 1 %}
+    <div class="carousel-controls">
+      <button type="button" class="carousel-btn" data-prev aria-label="Previous story">‹</button>
+      <div class="carousel-dots" data-dots></div>
+      <button type="button" class="carousel-btn" data-next aria-label="Next story">›</button>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+{% block body_extra %}<script src="/static/js/carousel.js"></script>{% endblock %}

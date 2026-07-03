@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block meta_description %}How long to binge {{ show.title }}? {{ show.computed_runtime_min|humanize_runtime }} of runtime{% if show.seasons %} across {{ show.seasons }} seasons{% endif %}. Watch the video breakdown and plan your binge.{% endblock %}
+{% block content %}
+<article class="show-detail">
+  <div class="show-hero">
+    <div class="poster poster-lg">
+      {% if show.poster_url %}
+        <img src="{{ show.poster_url }}" alt="{{ show.title }} poster">
+      {% else %}
+        <div class="poster-placeholder">{{ show.title[:1]|upper }}</div>
+      {% endif %}
+    </div>
+    <div class="show-hero-info">
+      <span class="badge badge-cat">{{ show.category|category_label }}</span>
+      <h1>{{ show.title }}</h1>
+
+      {% set meta = [] %}
+      {% if show.release_year %}{% set _ = meta.append(show.release_year|string) %}{% endif %}
+      {% if show.status|status_label %}{% set _ = meta.append(show.status|status_label) %}{% endif %}
+      {% if meta %}<p class="show-meta">{{ meta|join(" · ") }}</p>{% endif %}
+
+      <dl class="stats">
+        <div><dt>Total watch time</dt><dd class="big">{{ show.computed_runtime_min|humanize_runtime }}</dd></div>
+        {% if show.seasons %}<div><dt>Seasons</dt><dd>{{ show.seasons }}</dd></div>{% endif %}
+        {% if show.episodes %}<div><dt>Episodes</dt><dd>{{ show.episodes }}</dd></div>{% endif %}
+        {% if show.avg_runtime_min %}<div><dt>Avg episode</dt><dd>{{ show.avg_runtime_min }} min</dd></div>{% endif %}
+        {% if show.tmdb_rating %}<div><dt>Rating</dt><dd>★ {{ show.tmdb_rating }}<span class="rating-max">/10</span></dd></div>{% endif %}
+      </dl>
+
+      {% if show.overview %}<p class="show-overview">{{ show.overview }}</p>{% endif %}
+
+      <div class="cta-row">
+        {% if current_user %}
+          <form class="track-form" action="/account/shows/{{ show.id }}/status" method="post">
+            <input type="hidden" name="redirect_to" value="/shows/{{ show.id }}">
+            <label>Status
+              <select name="status" aria-label="Watch status">
+                {% for st in watch_statuses %}
+                <option value="{{ st }}" {% if user_show and user_show.status.value == st %}selected{% endif %}>{{ st|watch_state_label }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>Times watched
+              <input type="number" name="times_watched" min="1" value="{{ user_show.times_watched if user_show else 1 }}" aria-label="Times watched">
+            </label>
+            <button class="btn" type="submit">{{ "Update" if user_show else "+ Add to my binges" }}</button>
+          </form>
+          {% if user_show %}
+          <form action="/account/shows/{{ show.id }}/remove" method="post">
+            <button class="btn-link" type="submit">Remove</button>
+          </form>
+          {% endif %}
+        {% else %}
+          <a class="btn" href="/account/login?next=/shows/{{ show.id }}">+ Add to my binges</a>
+        {% endif %}
+      </div>
+      {% if current_user and user_show %}
+      <p class="track-current">On your list as <strong>{{ user_show.status.value|watch_state_label }}</strong>{% if user_show.times_watched > 1 %} · watched {{ user_show.times_watched }}×{% endif %}.</p>
+      {% endif %}
+      {% if show.streaming_platforms %}
+      <p class="watch-now">Watch now:
+        {% for p in show.streaming_platforms %}<span class="platform-chip">{{ p }}</span>{% endfor %}
+      </p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if show.total_runtime_min %}
+  <section class="show-tools">
+    <div class="tabs" role="tablist">
+      <button class="tab is-active" data-tab="calc" role="tab" aria-selected="true">Calculator</button>
+      <button class="tab" data-tab="plan" role="tab" aria-selected="false">Planner</button>
+    </div>
+    <div class="tab-panel" data-panel="calc" role="tabpanel">
+      {% include "_calculator_widget.html" with context %}
+    </div>
+    <div class="tab-panel is-hidden" data-panel="plan" role="tabpanel">
+      {% include "_planner_widget.html" with context %}
+      {% if current_user %}
+      <form class="planner-save" action="/account/shows/{{ show.id }}/planner" method="post">
+        <input type="hidden" name="redirect_to" value="/shows/{{ show.id }}">
+        <label>Save this plan to your account — hours/week
+          <input type="number" name="hours_per_week" min="0.5" max="168" step="0.5" value="7" required>
+        </label>
+        <button type="submit">Save to my binges</button>
+      </form>
+      {% else %}
+      <p class="hint"><a href="/account/login?next=/shows/{{ show.id }}">Log in</a> to save this plan to your account.</p>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if show.has_creator_video and show.videos %}
+  {% set v = show.videos[0] %}
+  {% set e = build_embed(v.platform.value, v.video_url) %}
+  <section class="creator-videos">
+    <h2>Video breakdown</h2>
+    <div class="video-card video-card-solo">
+      <div class="video-embed">
+        {% if e.platform == "youtube" and e.youtube_id %}
+          <iframe src="https://www.youtube.com/embed/{{ e.youtube_id }}" title="{{ show.title }} on YouTube"
+            loading="lazy" allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        {% elif e.platform == "tiktok" and e.tiktok_id %}
+          <blockquote class="tiktok-embed" cite="{{ e.url }}" data-video-id="{{ e.tiktok_id }}">
+            <a href="{{ e.url }}">Watch on TikTok</a>
+          </blockquote>
+        {% elif e.platform == "instagram" %}
+          <blockquote class="instagram-media" data-instgrm-permalink="{{ e.url }}" data-instgrm-version="14">
+            <a href="{{ e.url }}">Watch on Instagram</a>
+          </blockquote>
+        {% else %}
+          <a class="video-fallback" href="{{ e.url }}" target="_blank" rel="noopener">Watch on {{ e.platform }}</a>
+        {% endif %}
+      </div>
+      <p class="video-meta">
+        <span class="platform-chip">{{ v.platform.value }}</span>
+        <span class="views">{{ v.view_count|humanize_count }} views</span>
+      </p>
+    </div>
+  </section>
+  {% endif %}
+</article>
+{% endblock %}
+
+{% block body_extra %}
+  {% if show.total_runtime_min %}
+    <script src="/static/js/tabs.js"></script>
+    <script src="/static/js/calculator.js"></script>
+    <script src="/static/js/planner.js"></script>
+  {% endif %}
+  {% if show.has_creator_video and show.videos %}
+    {% set platform = show.videos[0].platform.value %}
+    {% if platform == 'tiktok' %}<script async src="https://www.tiktok.com/embed.js"></script>{% endif %}
+    {% if platform == 'instagram' %}<script async src="https://www.instagram.com/embed.js"></script>{% endif %}
+  {% endif %}
+{% endblock %}

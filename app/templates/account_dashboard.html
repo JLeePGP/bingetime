@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="dashboard-head">
+  <h1>Your binges</h1>
+  <div class="stat-hero">
+    <span class="stat-label">Total time spent</span>
+    <span class="stat-value">{{ total_watched_min|humanize_runtime }}</span>
+  </div>
+</section>
+
+<section>
+  <h2>Plan to watch &amp; watching</h2>
+  {% if upcoming %}
+    <div class="dash-list">
+      {% for us, s in upcoming %}
+      <div class="dash-row">
+        <a class="dash-show" href="/shows/{{ s.id }}">
+          {% if s.poster_url %}<img src="{{ s.poster_url }}" alt="" loading="lazy">{% endif %}
+          <div>
+            <strong>{{ s.title }}</strong>
+            <span class="runtime">{{ s.computed_runtime_min|humanize_runtime }}</span>
+            {% if us.planner_finish_date %}<span class="finish-tag">finish by {{ us.planner_finish_date }}</span>{% endif %}
+          </div>
+        </a>
+        <form class="dash-actions" action="/account/shows/{{ s.id }}/status" method="post">
+          <select name="status" aria-label="Status">
+            {% for st in statuses %}<option value="{{ st }}" {% if st == us.status.value %}selected{% endif %}>{{ st|watch_state_label }}</option>{% endfor %}
+          </select>
+          <label class="times">×<input type="number" name="times_watched" min="1" value="{{ us.times_watched }}" aria-label="Times watched"></label>
+          <button type="submit">Save</button>
+        </form>
+        <form action="/account/shows/{{ s.id }}/remove" method="post"><button class="btn-link" type="submit">Remove</button></form>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty">Nothing yet. <a href="/shows">Browse the catalog</a> and add a show.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Watched</h2>
+  {% if past %}
+    <div class="dash-list">
+      {% for us, s in past %}
+      <div class="dash-row">
+        <a class="dash-show" href="/shows/{{ s.id }}">
+          {% if s.poster_url %}<img src="{{ s.poster_url }}" alt="" loading="lazy">{% endif %}
+          <div>
+            <strong>{{ s.title }}</strong>
+            <span class="runtime">{{ ((s.computed_runtime_min or 0) * us.times_watched)|humanize_runtime }}{% if us.times_watched > 1 %} ({{ us.times_watched }}×){% endif %}</span>
+            {% if us.completed_at %}<span class="finish-tag">done {{ us.completed_at.date() }}</span>{% endif %}
+          </div>
+        </a>
+        <form class="dash-actions" action="/account/shows/{{ s.id }}/status" method="post">
+          <select name="status" aria-label="Status">
+            {% for st in statuses %}<option value="{{ st }}" {% if st == us.status.value %}selected{% endif %}>{{ st|watch_state_label }}</option>{% endfor %}
+          </select>
+          <label class="times">×<input type="number" name="times_watched" min="1" value="{{ us.times_watched }}" aria-label="Times watched"></label>
+          <button type="submit">Save</button>
+        </form>
+        <form action="/account/shows/{{ s.id }}/remove" method="post"><button class="btn-link" type="submit">Remove</button></form>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty">No completed binges yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
