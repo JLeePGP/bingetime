@@ -15,3 +15,15 @@ Desktop.ini
 # Spec files (kept locally, not tracked)
 BingeTime-Spec.docx
 BingeTime-Spec.md
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Secrets / env
+.env
+
+# Generated enrichment review artifact
+tmdb_review.csv
