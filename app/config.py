@@ -1,6 +1,7 @@
 """Environment-driven application settings."""
 from __future__ import annotations
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,6 +18,18 @@ class Settings(BaseSettings):
     database_url: str = (
         "postgresql+psycopg://bingetime:bingetime@localhost:5432/bingetime"
     )
+
+    @field_validator("database_url")
+    @classmethod
+    def _use_psycopg_driver(cls, v: str) -> str:
+        """Managed hosts (Railway/Heroku) hand out `postgres://` or
+        `postgresql://` URLs; SQLAlchemy needs the explicit psycopg-3 driver.
+        Normalize so the raw provider URL can be pasted in as-is."""
+        if v.startswith("postgres://"):
+            v = "postgresql://" + v[len("postgres://"):]
+        if v.startswith("postgresql://"):
+            v = "postgresql+psycopg://" + v[len("postgresql://"):]
+        return v
 
     # TMDB — v3 API key or v4 bearer token. Empty disables enrichment.
     tmdb_api_key: str = ""

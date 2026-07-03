@@ -101,4 +101,24 @@ Auth note: the spec suggested passlib; it's unmaintained and breaks on Python
 3.14, so we use the `bcrypt` library directly (same algorithm).
 
 **Deferred:** password-reset email flow (needs an email provider), JustWatch
-"watch now" links, production hosting/deploy.
+"watch now" links.
+
+## Deploy (Railway)
+
+The app deploys on Railway alongside the Postgres service (`railway.json` sets
+the build/start/migrate steps). Connect the GitHub repo as a new service; every
+push to `master` auto-deploys.
+
+Set these service variables (Settings → Variables):
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | the Postgres service's **internal** URL (`postgres.railway.internal`). The `postgresql://` prefix is auto-upgraded to `postgresql+psycopg://` in `config.py`. |
+| `SECRET_KEY` | a long random hex string (`python -c "import secrets; print(secrets.token_hex(32))"`) |
+| `DEBUG` | `false` — enables secure (HTTPS-only) session cookies and hides tracebacks |
+| `TMDB_API_KEY` | your TMDB key |
+| `ADMIN_EMAILS` | your email, for `/account/moderation` |
+
+`preDeployCommand` runs `alembic upgrade head` before each release. Health check
+is `/healthz`. Add the custom domain under Settings → Networking (auto-TLS,
+HTTP→HTTPS redirect handled by Railway's edge).
