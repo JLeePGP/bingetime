@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="dashboard-head">
+  <h1>Feedback</h1>
+  <div class="stat-hero">
+    <span class="stat-label">Open</span>
+    <span class="stat-value">{{ open_count }}</span>
+  </div>
+</section>
+
+{% if items %}
+  <div class="dash-list">
+    {% for f in items %}
+    <div class="mod-card{% if f.resolved %} is-resolved{% endif %}">
+      <p>
+        <span class="fb-tag fb-{{ f.category.value }}">{{ f.category.value }}</span>
+        {% if f.resolved %}<span class="fb-tag fb-done">resolved</span>{% endif %}
+      </p>
+      <p>{{ f.message }}</p>
+      <footer>
+        {{ f.created_at.strftime('%Y-%m-%d %H:%M') }}
+        {% if f.email %} · <a href="mailto:{{ f.email }}">{{ f.email }}</a>{% endif %}
+        {% if f.page_url %} · from <span class="fb-url">{{ f.page_url }}</span>{% endif %}
+      </footer>
+      <div class="mod-actions">
+        <form action="/account/feedback/{{ f.id }}/resolve" method="post">
+          <button type="submit">{{ "Reopen" if f.resolved else "Mark resolved" }}</button>
+        </form>
+        <form action="/account/feedback/{{ f.id }}/delete" method="post">
+          <button class="btn-link" type="submit">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="empty">No feedback yet.</p>
+{% endif %}
+{% endblock %}

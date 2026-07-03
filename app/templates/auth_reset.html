@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="auth-page">
+  <h1>Set a new password</h1>
+  {% if invalid %}
+    <p class="flash flash-error">This reset link is invalid or has expired. Reset links are single-use and last 1 hour.</p>
+    <p class="hint"><a href="/account/forgot">Request a new link</a></p>
+  {% else %}
+    {% if error %}<p class="flash flash-error">{{ error }}</p>{% endif %}
+    <form class="auth-form" action="/account/reset" method="post">
+      <input type="hidden" name="token" value="{{ token }}">
+      <label>New password
+        <input type="password" name="password" required minlength="8" autocomplete="new-password">
+        <small>At least 8 characters.</small>
+      </label>
+      <button type="submit">Update password</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

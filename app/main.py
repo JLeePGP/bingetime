@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from .config import settings
-from .routers import accounts, calculator, catalog, planner, stories
+from .routers import accounts, calculator, catalog, feedback, planner, stories
 from .templating import templates
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
@@ -28,6 +28,7 @@ app.include_router(catalog.router)
 app.include_router(calculator.router)
 app.include_router(planner.router)
 app.include_router(stories.router)
+app.include_router(feedback.router)
 app.include_router(accounts.router)
 
 

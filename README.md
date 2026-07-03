@@ -117,7 +117,11 @@ Set these service variables (Settings → Variables):
 | `SECRET_KEY` | a long random hex string (`python -c "import secrets; print(secrets.token_hex(32))"`) |
 | `DEBUG` | `false` — enables secure (HTTPS-only) session cookies and hides tracebacks |
 | `TMDB_API_KEY` | your TMDB key |
-| `ADMIN_EMAILS` | your email, for `/account/moderation` |
+| `ADMIN_EMAILS` | your email, for `/account/moderation` + `/account/feedback` |
+| `BASE_URL` | `https://www.bingetime.tv` — builds absolute links in emails |
+| `RESEND_API_KEY` | Resend API key (password-reset email). Unset = links logged, not sent |
+| `EMAIL_FROM` | `BingeTime <noreply@bingetime.tv>` (verify the domain in Resend) |
+| `CLARITY_PROJECT_ID` | Microsoft Clarity project id (analytics); unset = no snippet |
 
 `preDeployCommand` runs `alembic upgrade head` before each release. Health check
 is `/healthz`. Add the custom domain under Settings → Networking (auto-TLS,

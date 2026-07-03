@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="tool-page">
+  <h1>Send feedback</h1>
+  <p class="lede">Found a bug, want a feature, or just have a thought? Tell us — it goes straight to the team.</p>
+
+  {% if submitted %}
+  <p class="flash">Thanks! We got your feedback. 🙌</p>
+  {% endif %}
+
+  <div class="story-form">
+    <form action="/feedback" method="post">
+      <input type="hidden" name="page_url" id="fb-page-url" value="">
+      <label>Type
+        <select name="category">
+          {% for c in categories %}<option value="{{ c }}">{{ c|capitalize }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Your message
+        <textarea name="message" rows="6" maxlength="5000" required placeholder="What happened, or what would you like to see?"></textarea>
+      </label>
+      <label>Email (optional — if you'd like a reply)
+        <input type="email" name="email" maxlength="200" placeholder="you@example.com">
+      </label>
+      <button type="submit">Submit feedback</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
+{% block body_extra %}
+<script>
+  // Capture the page the user came from, so we know where the feedback is about.
+  (function () {
+    var el = document.getElementById("fb-page-url");
+    if (el) el.value = document.referrer || "";
+  })();
+</script>
+{% endblock %}

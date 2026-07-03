@@ -42,6 +42,17 @@ class Settings(BaseSettings):
     # Comma-separated emails allowed into the story-moderation queue.
     admin_emails: str = ""
 
+    # Absolute site origin, used to build links in outgoing email (reset, etc.).
+    base_url: str = "http://127.0.0.1:8000"
+
+    # Transactional email via Resend (https://resend.com). Empty disables
+    # sending — the reset link is logged instead so local dev still works.
+    resend_api_key: str = ""
+    email_from: str = "BingeTime <noreply@bingetime.tv>"
+
+    # Microsoft Clarity project id — when set, the analytics snippet renders.
+    clarity_project_id: str = ""
+
     @property
     def admin_email_set(self) -> set[str]:
         return {e.strip().lower() for e in self.admin_emails.split(",") if e.strip()}

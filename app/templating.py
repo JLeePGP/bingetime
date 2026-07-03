@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
 
+from .config import settings
 from .embeds import build_embed
 from .security import is_admin, session_user
 from .services.calculator import _humanize_duration
@@ -22,6 +23,7 @@ def _inject_user(request: Request) -> dict:
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR), context_processors=[_inject_user])
 templates.env.globals["build_embed"] = build_embed
+templates.env.globals["clarity_project_id"] = settings.clarity_project_id
 
 
 def humanize_count(value: int | None) -> str:

@@ -54,6 +54,12 @@ class UserShowStatus(str, enum.Enum):
     completed = "completed"
 
 
+class FeedbackCategory(str, enum.Enum):
+    bug = "bug"
+    suggestion = "suggestion"
+    other = "other"
+
+
 def _uuid() -> str:
     return str(uuid.uuid4())
 
@@ -152,6 +158,47 @@ class BingeStory(Base):
         index=True,
     )
     display_name: Mapped[str | None] = mapped_column(String, nullable=True)
+
+
+class Feedback(Base):
+    __tablename__ = "feedback"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    category: Mapped[FeedbackCategory] = mapped_column(
+        Enum(FeedbackCategory, name="feedback_category"), nullable=False
+    )
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    email: Mapped[str | None] = mapped_column(String, nullable=True)  # optional contact
+    page_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    user_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    resolved: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # SHA-256 of the raw token; the raw value only ever lives in the emailed URL.
+    token_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class User(Base):
