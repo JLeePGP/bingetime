@@ -14,6 +14,10 @@ psycopg[binary]>=3.2
 # External data sourcing
 httpx>=0.27                      # TMDB API client
 
+# Blog content agent: LLM drafting (Anthropic SDK) + cover-image composition
+anthropic>=0.40                  # Claude API client (blog content agent)
+pillow>=10.4                     # compose blog cover + OG share cards
+
 # Auth (email + password): password hashing + signed session cookies.
 # Using bcrypt directly (passlib 1.7.4 is unmaintained and breaks on py3.14).
 bcrypt>=4.1

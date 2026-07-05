@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="tool-page">
+  <h1>{{ "Edit post" if post else "New post" }}</h1>
+  <p class="lede"><a href="/account/blog">← All posts</a></p>
+  {% if error %}<p class="flash flash-error">{{ error }}</p>{% endif %}
+
+  {% if post and post.review_flags %}
+  <div class="flash flash-error">
+    <strong>Review flags (auto-fixed on save — double-check these):</strong>
+    <ul>{% for f in post.review_flags %}<li>{{ f }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  {% if post and post.source == 'agent' %}
+  {% set gm = post.gen_meta or {} %}
+  <form class="regen story-form" method="post" action="/account/blog/{{ post.id }}/regenerate" data-agent-form>
+    <span class="hint">Agent draft{% if gm.style %} · {{ gm.style }} · {{ gm.length }}{% endif %}. Regenerate to redraft the body + cover (keeps slug/schedule):</span>
+    <select name="style" aria-label="Style">
+      {% for st in ['funny','educational','roast','hype','chill'] %}<option value="{{ st }}"{{ ' selected' if st == gm.style else '' }}>{{ st }}</option>{% endfor %}
+    </select>
+    <select name="length" aria-label="Length">
+      {% for l in ['short','medium','long','surprise'] %}<option value="{{ l }}"{{ ' selected' if l == gm.length else '' }}>{{ l }}</option>{% endfor %}
+    </select>
+    <button type="submit">Regenerate</button>
+  </form>
+  {% endif %}
+
+  {% if post %}
+  {% set cited = (post.gen_meta or {}).get('shows_cited') or [] %}
+  <form class="regen story-form" method="post" action="/account/blog/{{ post.id }}/cover" data-agent-form>
+    <span class="hint">Cover art from:</span>
+    {% if cited %}
+    <select name="cover_show" aria-label="Cover show">
+      <option value="">all cited shows (collage)</option>
+      {% for s in cited %}<option value="{{ s }}"{{ ' selected' if s == (post.gen_meta or {}).get('cover_show') else '' }}>{{ s }}</option>{% endfor %}
+    </select>
+    {% else %}
+    <input type="text" name="cover_show" placeholder="show slug, e.g. the-simpsons">
+    {% endif %}
+    <button type="submit">Rebuild cover</button>
+  </form>
+  {% if values.cover_image_url %}<img class="cover-preview" src="{{ values.cover_image_url }}" alt="cover preview">{% endif %}
+  {% endif %}
+
+  <div class="story-form">
+    <form action="{{ ('/account/blog/' ~ post.id ~ '/edit') if post else '/account/blog/new' }}" method="post">
+      <label>Title
+        <input type="text" name="title" required maxlength="200" value="{{ values.title }}">
+      </label>
+
+      {% if can_edit_slug %}
+      <label>Slug (editable until published, then locked)
+        <input type="text" name="slug" maxlength="200" value="{{ values.slug }}" placeholder="auto-generated from the title if blank">
+      </label>
+      {% else %}
+      <label>Slug (locked — post is public)
+        <input type="text" value="{{ values.slug }}" disabled>
+      </label>
+      {% endif %}
+
+      <label>TL;DR / direct answer (renders at the top; powers AEO)
+        <textarea name="tldr" rows="2" maxlength="400">{{ values.tldr }}</textarea>
+      </label>
+
+      <label>Excerpt (list card + meta description)
+        <textarea name="excerpt" rows="2" maxlength="400">{{ values.excerpt }}</textarea>
+      </label>
+
+      <label>Body (HTML)
+        <textarea name="body_html" rows="18" required class="code-area">{{ values.body_html }}</textarea>
+        <small>Raw HTML. Show links are already resolved to <code>/shows/…</code> anchors.</small>
+      </label>
+
+      <label>Kicker (short cover label, e.g. WEEKEND BINGE)
+        <input type="text" name="kicker" maxlength="40" value="{{ values.kicker }}">
+      </label>
+
+      <label>Cover image URL (on-site thumbnail — imagery, no title)
+        <input type="text" name="cover_image_url" maxlength="500" value="{{ values.cover_image_url }}">
+        <small>Use "Rebuild cover" above to regenerate from a show, or paste any image URL here.</small>
+      </label>
+
+      <label>Share image URL (title-bearing OG/social card)
+        <input type="text" name="share_image_url" maxlength="500" value="{{ values.share_image_url }}">
+      </label>
+
+      <details class="advanced-json">
+        <summary>Structured data — ItemList &amp; FAQ (JSON, for AEO)</summary>
+        <label>list_items
+          <textarea name="list_items_json" rows="6" class="code-area" placeholder='[{"show_slug": "one-piece", "value": "1,000h", "note": "…"}]'>{{ values.list_items_json }}</textarea>
+        </label>
+        <label>faq
+          <textarea name="faq_json" rows="6" class="code-area" placeholder='[{"q": "…", "a": "…"}]'>{{ values.faq_json }}</textarea>
+        </label>
+        <small>Leave blank to omit. Invalid JSON is ignored (the field clears).</small>
+      </details>
+
+      <label>Author
+        <input type="text" name="author" maxlength="100" value="{{ values.author }}">
+      </label>
+
+      <label>Status
+        <select name="status">
+          {% for s in statuses %}
+          <option value="{{ s }}"{{ ' selected' if s == values.status else '' }}>{{ s|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>Publish time (UTC)
+        <input type="datetime-local" name="publish_at" value="{{ values.publish_at }}">
+        <small>Blank = publish now. A future time (with status Published) schedules it — hidden until then.</small>
+      </label>
+
+      <button type="submit">{{ "Save changes" if post else "Create post" }}</button>
+    </form>
+
+    {% if post %}
+    <p class="hint">
+      Public URL: <a href="/blog/{{ post.id }}" target="_blank" rel="noopener">/blog/{{ post.id }}</a>
+      · current state: <span class="post-state post-{{ post.state }}">{{ post.state }}</span>
+    </p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+  document.querySelectorAll('[data-agent-form]').forEach(function (f) {
+    f.addEventListener('submit', function () {
+      var b = f.querySelector('button[type="submit"]');
+      if (b) { b.disabled = true; b.textContent = 'Working…'; }
+    });
+  });
+</script>
+{% endblock %}

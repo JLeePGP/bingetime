@@ -46,6 +46,7 @@
         <a href="/planner">Planner</a>
         <a href="/blog">Blog</a>
         <a href="/stories">Stories</a>
+        {% if is_admin %}<a href="/account/blog">Posts</a>{% endif %}
         {% if is_admin %}<a href="/account/moderation">Moderate</a>{% endif %}
         {% if is_admin %}<a href="/account/feedback">Feedback</a>{% endif %}
       </nav>
@@ -84,6 +85,7 @@
       <a href="/planner">Planner</a>
       <a href="/blog">Blog</a>
       <a href="/stories">Stories</a>
+      {% if is_admin %}<a href="/account/blog">Posts</a>{% endif %}
       {% if is_admin %}<a href="/account/moderation">Moderate</a>{% endif %}
       {% if is_admin %}<a href="/account/feedback">Feedback</a>{% endif %}
     </nav>

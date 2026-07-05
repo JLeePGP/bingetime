@@ -13,6 +13,8 @@ from .security import is_admin, session_user
 from .seo import (
     article_jsonld,
     breadcrumb_jsonld,
+    faqpage_jsonld,
+    itemlist_jsonld,
     organization_jsonld,
     show_jsonld,
     website_jsonld,
@@ -85,6 +87,8 @@ templates.env.globals["organization_jsonld"] = organization_jsonld
 templates.env.globals["breadcrumb_jsonld"] = breadcrumb_jsonld
 templates.env.globals["show_jsonld"] = show_jsonld
 templates.env.globals["article_jsonld"] = article_jsonld
+templates.env.globals["itemlist_jsonld"] = itemlist_jsonld
+templates.env.globals["faqpage_jsonld"] = faqpage_jsonld
 
 
 def humanize_count(value: int | None) -> str:

@@ -10,7 +10,16 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from . import seo
 from .config import settings
-from .routers import accounts, blog, calculator, catalog, feedback, planner, stories
+from .routers import (
+    accounts,
+    blog,
+    blog_admin,
+    calculator,
+    catalog,
+    feedback,
+    planner,
+    stories,
+)
 from .templating import templates
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
@@ -25,8 +34,17 @@ app.add_middleware(
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+# Runtime-generated media (blog cover / OG cards) lives outside the committed
+# static tree. Back this path with a Railway volume so images survive redeploys;
+# without one it still works until the next deploy. Created on boot so the mount
+# doesn't error on a fresh checkout.
+MEDIA_DIR = Path(__file__).parent.parent / "media"
+MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/media", StaticFiles(directory=str(MEDIA_DIR)), name="media")
+
 app.include_router(catalog.router)
 app.include_router(blog.router)
+app.include_router(blog_admin.router)
 app.include_router(calculator.router)
 app.include_router(planner.router)
 app.include_router(stories.router)
@@ -48,7 +66,7 @@ async def public_cache_headers(request: Request, call_next):
     response = await call_next(request)
     if request.method != "GET" or response.status_code != 200:
         return response
-    if request.url.path.startswith("/static/"):
+    if request.url.path.startswith(("/static/", "/media/")):
         response.headers.setdefault(
             "Cache-Control", "public, max-age=31536000, immutable"
         )

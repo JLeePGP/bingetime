@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import enum
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from sqlalchemy import (
     Boolean,
@@ -21,7 +21,7 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -175,9 +175,28 @@ class BlogPost(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     # Short summary — powers list cards, meta description, and OG/JSON-LD.
     excerpt: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Direct-answer line rendered at the top of the post + used for AEO.
+    tldr: Mapped[str | None] = mapped_column(Text, nullable=True)
     body_html: Mapped[str] = mapped_column(Text, nullable=False)
     cover_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Title-bearing OG/social card (distinct from the imagery-only on-site cover).
+    share_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Short cover label (e.g. "WEEKEND BINGE") — a design element, not the title.
+    kicker: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Structured ranked list → rendered + emitted as ItemList JSON-LD (AEO).
+    # Shape: [{"show_slug": str|None, "value": str, "note": str}, ...]
+    list_items: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    # Q/A pairs → FAQPage JSON-LD. Shape: [{"q": str, "a": str}, ...]
+    faq: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     author: Mapped[str] = mapped_column(String, nullable=False, default="BingeTime")
+    # Provenance: "manual" (hand-written / seeded) or "agent" (drafted by the
+    # content agent). Lets the admin surface + future analytics tell them apart.
+    source: Mapped[str] = mapped_column(String, nullable=False, default="manual")
+    # What the save-time lint auto-fixed (banned dashes, invalid show links),
+    # surfaced to the admin so a flagged draft gets a second look. None = clean.
+    review_flags: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    # Generation audit trail (style, length target, model, effort). None if manual.
+    gen_meta: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     status: Mapped[PostStatus] = mapped_column(
         Enum(PostStatus, name="post_status"),
         nullable=False,
@@ -196,6 +215,32 @@ class BlogPost(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+    @property
+    def is_publicly_visible(self) -> bool:
+        """Public visibility gate: published AND its publish time has arrived.
+
+        Scheduling is expressed purely as a future `published_at` — a published
+        post whose `published_at` is still in the future is "scheduled" and
+        stays hidden until then, so no cron/worker is needed to flip it live.
+        """
+        return (
+            self.status == PostStatus.published
+            and self.published_at is not None
+            and self.published_at <= datetime.now(timezone.utc)
+        )
+
+    @property
+    def state(self) -> str:
+        """Admin-facing lifecycle label: 'draft', 'scheduled', or 'live'."""
+        if self.status != PostStatus.published:
+            return "draft"
+        if (
+            self.published_at is not None
+            and self.published_at > datetime.now(timezone.utc)
+        ):
+            return "scheduled"
+        return "live"
 
 
 class Feedback(Base):

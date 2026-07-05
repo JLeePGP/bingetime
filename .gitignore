@@ -27,3 +27,6 @@ __pycache__/
 
 # Generated enrichment review artifact
 tmdb_review.csv
+
+# Runtime-generated media (blog cover / OG cards) — regenerated per post
+/media/

@@ -1,10 +1,14 @@
 {% extends "base.html" %}
-{% block meta_description %}{{ post.excerpt or post.title }}{% endblock %}
+{% block meta_description %}{{ post.tldr or post.excerpt or post.title }}{% endblock %}
 {% block og_type %}article{% endblock %}
-{% block og_image %}{{ post.cover_image_url or (base_url ~ '/static/img/og-default.png') }}{% endblock %}
+{% block og_image %}{{ post.share_image_url or post.cover_image_url or (base_url ~ '/static/img/og-default.png') }}{% endblock %}
 {% block structured_data %}
 <script type="application/ld+json">{{ article_jsonld(post, canonical_url, base_url)|tojson }}</script>
 <script type="application/ld+json">{{ breadcrumb_jsonld([('Home', base_url ~ '/'), ('Blog', base_url ~ '/blog'), (post.title, canonical_url)])|tojson }}</script>
+{% set il = itemlist_jsonld(post, base_url) %}
+{% if il %}<script type="application/ld+json">{{ il|tojson }}</script>{% endif %}
+{% set fq = faqpage_jsonld(post) %}
+{% if fq %}<script type="application/ld+json">{{ fq|tojson }}</script>{% endif %}
 {% endblock %}
 {% block content %}
 <article class="blog-article">
@@ -14,10 +18,24 @@
     {% if post.published_at %}{{ post.published_at|pretty_date }} · {% endif %}{{ post.author }}
     {% if post.status.value == 'draft' %}· <span class="blog-draft-tag">Draft preview</span>{% endif %}
   </p>
+  {% if post.tldr %}<p class="blog-tldr">{{ post.tldr }}</p>{% endif %}
   {% if post.cover_image_url %}
   <div class="blog-cover"><img src="{{ post.cover_image_url }}" alt=""></div>
   {% endif %}
   <div class="blog-body">{{ post.body_html|safe }}</div>
+
+  {% if post.faq %}
+  <section class="blog-faq">
+    <h2>FAQ</h2>
+    {% for qa in post.faq %}
+    <div class="faq-item">
+      <h3>{{ qa.q }}</h3>
+      <p>{{ qa.a }}</p>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
   <div class="blog-cta">
     <p>See exactly how long your next binge will take.</p>
     <a class="btn" href="/shows">Browse the catalog</a>

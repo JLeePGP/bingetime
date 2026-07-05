@@ -7,6 +7,7 @@ preview/localhost hosts never leak into canonical tags or the sitemap.
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from xml.sax.saxutils import escape
 
 from fastapi import APIRouter, Depends
@@ -125,6 +126,50 @@ def article_jsonld(post, url: str, base_url: str) -> dict:
     return data
 
 
+def itemlist_jsonld(post, base_url: str) -> dict | None:
+    """ItemList schema for a ranked-list post (AEO). Built from post.list_items;
+    links each item to its show page when the slug is known."""
+    items = getattr(post, "list_items", None) or []
+    base = base_url.rstrip("/")
+    elements = []
+    for i, it in enumerate(items):
+        name = (it.get("title") or it.get("value") or it.get("note") or "").strip()
+        if not name:
+            continue
+        el: dict = {"@type": "ListItem", "position": i + 1, "name": name}
+        if it.get("show_slug"):
+            el["url"] = f"{base}/shows/{it['show_slug']}"
+        elements.append(el)
+    if not elements:
+        return None
+    return {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "itemListElement": elements,
+    }
+
+
+def faqpage_jsonld(post) -> dict | None:
+    """FAQPage schema (AEO) from post.faq — a list of {q, a} pairs."""
+    faq = getattr(post, "faq", None) or []
+    entries = [
+        {
+            "@type": "Question",
+            "name": qa["q"],
+            "acceptedAnswer": {"@type": "Answer", "text": qa["a"]},
+        }
+        for qa in faq
+        if qa.get("q") and qa.get("a")
+    ]
+    if not entries:
+        return None
+    return {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": entries,
+    }
+
+
 # --- robots.txt + sitemap.xml --------------------------------------------
 
 
@@ -158,10 +203,14 @@ def sitemap(db: Session = Depends(get_db)) -> Response:
     # Category landing pages ("anime binge times", etc.).
     for cat in Category:
         entries.append((f"{base}/shows?category={cat.value}", "weekly", "0.7"))
-    # Published blog posts.
+    # Blog posts that are live now (published + publish time reached) —
+    # scheduled posts stay out of the sitemap until they go live.
+    now = datetime.now(timezone.utc)
     published = (
         select(BlogPost.id)
         .where(BlogPost.status == PostStatus.published)
+        .where(BlogPost.published_at.isnot(None))
+        .where(BlogPost.published_at <= now)
         .order_by(BlogPost.id)
     )
     for slug in db.execute(published).scalars():
