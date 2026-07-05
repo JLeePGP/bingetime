@@ -1,12 +1,22 @@
 """Catalog: homepage, show grid (search + filter + pagination), show detail."""
 from __future__ import annotations
 
+import random
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from ..database import get_db
-from ..models import BingeStory, Category, Show, StoryStatus, UserShow, UserShowStatus
+from ..models import (
+    BingeStory,
+    Category,
+    CreatorVideo,
+    Show,
+    StoryStatus,
+    UserShow,
+    UserShowStatus,
+)
 from ..security import current_user
 from ..templating import templates
 
@@ -18,16 +28,21 @@ PAGE_SIZE = 24
 @router.get("/")
 def home(request: Request, db: Session = Depends(get_db)):
     """Hero + featured shows + a carousel of community binge stories."""
-    featured = (
+    # One clean row of 6, drawn from the most-popular breakdowns (by top video
+    # view count) and randomly rotated so the homepage cycles on each visit.
+    pool = (
         db.execute(
             select(Show)
+            .join(CreatorVideo, CreatorVideo.show_id == Show.id)
             .where(Show.has_creator_video.is_(True))
-            .order_by(Show.total_runtime_min.desc().nullslast())
-            .limit(8)
+            .group_by(Show.id)
+            .order_by(func.max(CreatorVideo.view_count).desc().nullslast())
+            .limit(18)
         )
         .scalars()
         .all()
     )
+    featured = random.sample(pool, min(6, len(pool)))
     # Randomize the carousel order so no single story (or its tone) always
     # leads the homepage.
     stories = (

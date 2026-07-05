@@ -1,12 +1,47 @@
 {% extends "base.html" %}
 {% block content %}
-{% set show = prefill %}
 <section class="tool-page">
-  <h1>How long to binge?</h1>
-  <p class="lede">Enter a runtime (or start from a show) and see it in hours, days, and weeks — with a rewatch multiplier for the real damage.</p>
+  <h1>How long to binge any show?</h1>
+  <p class="lede">Pick a show and see exactly how many hours of watching it holds, start to finish, broken down into hours, days, and weeks. Add your rewatches for the grand total.</p>
+
+  <form class="calc-picker" method="get" action="/calculator">
+    <label for="calc-show-select">Choose a show</label>
+    <select id="calc-show-select" name="show" onchange="this.form.submit()">
+      <option value="">Select a show…</option>
+      {% for s in shows %}
+      <option value="{{ s.id }}"{{ ' selected' if prefill and prefill.id == s.id else '' }}>{{ s.title }}</option>
+      {% endfor %}
+    </select>
+    <noscript><button type="submit">Show me</button></noscript>
+  </form>
+
+  {% if prefill and prefill.total_runtime_min %}
+  {% set show = prefill %}
+  <div class="calc-show">
+    <a class="calc-show-poster" href="/shows/{{ show.id }}">
+      {% if show.poster_url %}
+        <img src="{{ show.poster_url }}" alt="{{ show.title }} poster">
+      {% else %}
+        <div class="poster-placeholder">{{ show.title[:1]|upper }}</div>
+      {% endif %}
+    </a>
+    <div class="calc-show-info">
+      <span class="badge badge-cat">{{ show.category|category_label }}</span>
+      <h2><a href="/shows/{{ show.id }}">{{ show.title }}</a></h2>
+      <p class="calc-show-runtime">{{ show.computed_runtime_min|humanize_runtime }} <span>total runtime</span></p>
+      {% set meta = [] %}
+      {% if show.episodes %}{% set _ = meta.append(show.episodes ~ ' episodes') %}{% endif %}
+      {% if show.seasons %}{% set _ = meta.append((show.seasons ~ ' season') if show.seasons == 1 else (show.seasons ~ ' seasons')) %}{% endif %}
+      {% if show.release_year %}{% set _ = meta.append(show.release_year|string) %}{% endif %}
+      {% if show.tmdb_rating %}{% set _ = meta.append('★ ' ~ show.tmdb_rating) %}{% endif %}
+      {% if meta %}<p class="calc-show-meta">{{ meta|join(' · ') }}</p>{% endif %}
+    </div>
+  </div>
   {% include "_calculator_widget.html" with context %}
-  {% if not prefill %}
-  <p class="hint">Tip: open any <a href="/shows">show in the catalog</a> to prefill its runtime automatically.</p>
+  {% elif prefill %}
+  <p class="calc-empty">We don't have a runtime on file for {{ prefill.title }} yet.</p>
+  {% else %}
+  <p class="calc-empty">Pick a show above to see how long it takes to binge.</p>
   {% endif %}
 </section>
 {% endblock %}

@@ -29,16 +29,24 @@ def calculator_page(
     show: str | None = None,
     db: Session = Depends(get_db),
 ):
-    """Standalone calculator. ?show=<slug> prefills a catalog show's runtime."""
+    """Standalone calculator: pick a show, its runtime auto-fills, then set a
+    rewatch count + speed. ?show=<slug> selects a show directly."""
     prefill = None
     if show:
         prefill = db.execute(
             select(Show).where(Show.id == show)
         ).scalar_one_or_none()
+    # (id, title) for the picker dropdown — only shows we can actually compute
+    # a watch time for.
+    shows = db.execute(
+        select(Show.id, Show.title)
+        .where(Show.total_runtime_min.isnot(None))
+        .order_by(Show.title.asc())
+    ).all()
     return templates.TemplateResponse(
         request,
         "calculator.html",
-        {"title": "Watch-time calculator", "prefill": prefill},
+        {"title": "Watch-time calculator", "prefill": prefill, "shows": shows},
     )
 
 

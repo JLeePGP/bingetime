@@ -1,17 +1,10 @@
-{# Reusable calculator. If `show` is defined+non-null, its runtime is fixed;
-   otherwise the user types a runtime manually. Driven by /static/js/calculator.js #}
+{# Reusable calculator: the show's runtime is the base (auto-filled); the user
+   sets a rewatch count + playback speed. Driven by /static/js/calculator.js #}
 <div class="calc"
      data-base-min="{% if show is defined and show and show.total_runtime_min %}{{ show.total_runtime_min }}{% else %}0{% endif %}"
      {% if show is defined and show %}data-show-title="{{ show.title }}"{% endif %}>
   <h2 class="calc-title">Watch-time calculator</h2>
   <div class="calc-inputs">
-    {% if show is defined and show and show.total_runtime_min %}
-      <p class="calc-fixed">Base runtime: <strong>{{ show.total_runtime_min|humanize_runtime }}</strong> for {{ show.title }}</p>
-    {% else %}
-      <label>Total runtime (minutes)
-        <input type="number" name="base_runtime_min" min="0" step="1" value="{{ (show.total_runtime_min if show is defined and show else 0) or 0 }}" placeholder="e.g. 6120">
-      </label>
-    {% endif %}
     <label>Times watched
       <input type="number" name="times_watched" min="1" max="10000" step="1" value="1">
     </label>

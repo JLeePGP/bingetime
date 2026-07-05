@@ -1,10 +1,9 @@
 {% extends "base.html" %}
-{% block page_title %}Blog — binge guides & watch-time lists{% endblock %}
-{% block meta_description %}Weekend binge lists, watch-time guides, and data on how long your favorite shows really take — from the team behind BingeTime.{% endblock %}
+{% block page_title %}Blog: binge guides & watch-time lists{% endblock %}
+{% block meta_description %}Weekend binge lists, watch-time guides, and data on how long your favorite shows really take, from the team behind BingeTime.{% endblock %}
 {% block content %}
 <section class="blog-head">
   <h1>The BingeTime Blog</h1>
-  <p class="lede">Watch-time guides, weekend binge lists, and the data behind how long your next obsession really takes.</p>
 </section>
 
 {% if posts %}
@@ -23,6 +22,6 @@
   {% endfor %}
 </div>
 {% else %}
-<p class="empty">No posts yet — check back soon.</p>
+<p class="empty">No posts yet. Check back soon.</p>
 {% endif %}
 {% endblock %}

@@ -1,28 +1,60 @@
 {% extends "base.html" %}
 {% block content %}
-{% set show = prefill %}
 <section class="tool-page">
   <h1>Plan your binge</h1>
-  <p class="lede">Tell us how many hours a week you can watch, and we'll tell you the finish-by date — then drop it on your calendar.</p>
+  <p class="lede">Pick a show, tell us how many hours a week you realistically have, and we'll give you a finish-by date (plus a calendar reminder so you actually stick to it).</p>
+
+  <form class="calc-picker" method="get" action="/planner">
+    <label for="plan-show-select">Choose a show</label>
+    <select id="plan-show-select" name="show" onchange="this.form.submit()">
+      <option value="">Select a show…</option>
+      {% for s in shows %}
+      <option value="{{ s.id }}"{{ ' selected' if prefill and prefill.id == s.id else '' }}>{{ s.title }}</option>
+      {% endfor %}
+    </select>
+    <noscript><button type="submit">Show me</button></noscript>
+  </form>
+
+  {% if prefill and prefill.total_runtime_min %}
+  {% set show = prefill %}
+  <div class="calc-show">
+    <a class="calc-show-poster" href="/shows/{{ show.id }}">
+      {% if show.poster_url %}
+        <img src="{{ show.poster_url }}" alt="{{ show.title }} poster">
+      {% else %}
+        <div class="poster-placeholder">{{ show.title[:1]|upper }}</div>
+      {% endif %}
+    </a>
+    <div class="calc-show-info">
+      <span class="badge badge-cat">{{ show.category|category_label }}</span>
+      <h2><a href="/shows/{{ show.id }}">{{ show.title }}</a></h2>
+      <p class="calc-show-runtime">{{ show.computed_runtime_min|humanize_runtime }} <span>total runtime</span></p>
+      {% set meta = [] %}
+      {% if show.episodes %}{% set _ = meta.append(show.episodes ~ ' episodes') %}{% endif %}
+      {% if show.seasons %}{% set _ = meta.append((show.seasons ~ ' season') if show.seasons == 1 else (show.seasons ~ ' seasons')) %}{% endif %}
+      {% if show.release_year %}{% set _ = meta.append(show.release_year|string) %}{% endif %}
+      {% if meta %}<p class="calc-show-meta">{{ meta|join(' · ') }}</p>{% endif %}
+    </div>
+  </div>
 
   {% include "_planner_widget.html" with context %}
 
-  {% if show %}
-    {% if current_user %}
-    <form class="planner-save" action="/account/shows/{{ show.id }}/planner" method="post">
-      <input type="hidden" name="redirect_to" value="/planner?show={{ show.id }}">
-      <label>Save this plan to your account — hours/week
-        <input type="number" name="hours_per_week" min="0.5" max="168" step="0.5" value="7" required>
-      </label>
-      <button type="submit">Save to my binges</button>
-    </form>
-    {% else %}
-    <p class="hint"><a href="/account/login?next=/planner?show={{ show.id }}">Log in</a> to save this plan to your account.</p>
-    {% endif %}
+  {% if current_user %}
+  <form class="planner-save" action="/account/shows/{{ show.id }}/planner" method="post">
+    <input type="hidden" name="redirect_to" value="/planner?show={{ show.id }}">
+    <label>Hours per week to lock this plan to your account
+      <input type="number" name="hours_per_week" min="0.5" max="168" step="0.5" value="7" required>
+    </label>
+    <button type="submit">Add {{ show.title }} to my binges</button>
+  </form>
+  {% else %}
+  <p class="hint"><a href="/account/login?next=/planner?show={{ show.id }}">Log in</a> to save this plan and add the show to your account.</p>
   {% endif %}
 
-  {% if not show %}
-  <p class="hint">Tip: open any <a href="/shows">show in the catalog</a> to plan its exact runtime.</p>
+  {% elif prefill %}
+  <p class="calc-empty">We don't have a runtime on file for {{ prefill.title }} yet.</p>
+  {% else %}
+  <p class="calc-empty">Pick a show above to build your binge plan.</p>
   {% endif %}
 </section>
 {% endblock %}

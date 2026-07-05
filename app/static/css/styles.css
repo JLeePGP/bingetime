@@ -51,6 +51,12 @@ button:active, .btn:active { transform: translateY(1px); }
 
 /* Grid + cards */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 18px; margin: 22px 0; }
+/* Homepage featured strip: one clean row of 6 on desktop, swipeable on mobile. */
+.featured-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; margin: 22px 0; }
+@media (max-width: 760px) {
+  .featured-row { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 44%; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+  .featured-row .show-card { scroll-snap-align: start; }
+}
 .show-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: transform .12s ease, border-color .12s; }
 .show-card:hover { transform: translateY(-3px); border-color: var(--accent-2); }
 .poster { position: relative; aspect-ratio: 2/3; background: var(--surface-2); }
@@ -108,6 +114,20 @@ button:active, .btn:active { transform: translateY(1px); }
 .calc-units { list-style: none; display: flex; gap: 28px; padding: 0; margin: 14px 0; flex-wrap: wrap; }
 .calc-units strong { font-size: 1.4rem; display: block; }
 .calc-share { color: var(--muted); }
+
+/* Calculator: show picker + selected-show card */
+.calc-picker { display: flex; flex-direction: column; gap: 6px; margin: 18px 0; }
+.calc-picker label { font-size: .85rem; color: var(--muted); font-weight: 600; }
+.calc-picker select { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 1rem; max-width: 440px; }
+.calc-empty { color: var(--muted); padding: 18px 0; }
+.calc-show { display: flex; gap: 18px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 18px 0; }
+.calc-show-poster { flex: 0 0 auto; width: 92px; }
+.calc-show-poster img, .calc-show-poster .poster-placeholder { width: 92px; height: 138px; object-fit: cover; border-radius: 10px; display: block; }
+.calc-show-info h2 { margin: 6px 0 4px; font-size: 1.3rem; }
+.calc-show-info h2 a { color: var(--text); }
+.calc-show-runtime { font-size: 1.1rem; font-weight: 700; margin: 0 0 4px; color: var(--accent); }
+.calc-show-runtime span { color: var(--muted); font-weight: 400; font-size: .85rem; }
+.calc-show-meta { color: var(--muted); font-size: .9rem; margin: 0; }
 .finish-headline { font-size: 1.5rem; }
 .finish-headline strong { color: var(--accent); }
 

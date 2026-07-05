@@ -3,10 +3,10 @@
 {% block content %}
 <section class="hero">
   <h1>How long does it take to binge any show?</h1>
-  <p class="lede">Find the total watch time, see the original video breakdown, and plan your binge schedule.</p>
+  <p class="lede">See how many hours your favorite shows really hold, find your next obsession, and plan the perfect binge.</p>
   <div class="hero-search">
     <form action="/shows" method="get" role="search">
-      <input type="search" name="q" placeholder="Search a show — One Piece, Breaking Bad…" aria-label="Search shows">
+      <input type="search" name="q" placeholder="Search a show like One Piece or Breaking Bad" aria-label="Search shows">
       <button type="submit">Search</button>
     </form>
   </div>
@@ -14,8 +14,8 @@
 
 {% if featured %}
 <section>
-  <h2>Featured shows</h2>
-  <div class="grid">
+  <h2>Trending breakdowns</h2>
+  <div class="featured-row">
     {% for show in featured %}{% include "_show_card.html" %}{% endfor %}
   </div>
 </section>
