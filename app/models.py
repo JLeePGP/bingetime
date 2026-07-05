@@ -60,6 +60,11 @@ class FeedbackCategory(str, enum.Enum):
     other = "other"
 
 
+class PostStatus(str, enum.Enum):
+    draft = "draft"
+    published = "published"
+
+
 def _uuid() -> str:
     return str(uuid.uuid4())
 
@@ -158,6 +163,39 @@ class BingeStory(Base):
         index=True,
     )
     display_name: Mapped[str | None] = mapped_column(String, nullable=True)
+
+
+class BlogPost(Base):
+    """Editorial content for SEO/discovery. Authored HTML (draft → published),
+    designed to be written by a future agent-drafts/human-approves pipeline."""
+
+    __tablename__ = "blog_posts"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)  # slug, e.g. finish-in-a-weekend
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    # Short summary — powers list cards, meta description, and OG/JSON-LD.
+    excerpt: Mapped[str | None] = mapped_column(String, nullable=True)
+    body_html: Mapped[str] = mapped_column(Text, nullable=False)
+    cover_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    author: Mapped[str] = mapped_column(String, nullable=False, default="BingeTime")
+    status: Mapped[PostStatus] = mapped_column(
+        Enum(PostStatus, name="post_status"),
+        nullable=False,
+        default=PostStatus.draft,
+        index=True,
+    )
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
 
 class Feedback(Base):

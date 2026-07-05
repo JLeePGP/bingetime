@@ -10,7 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from . import seo
 from .config import settings
-from .routers import accounts, calculator, catalog, feedback, planner, stories
+from .routers import accounts, blog, calculator, catalog, feedback, planner, stories
 from .templating import templates
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
@@ -26,6 +26,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 app.include_router(catalog.router)
+app.include_router(blog.router)
 app.include_router(calculator.router)
 app.include_router(planner.router)
 app.include_router(stories.router)

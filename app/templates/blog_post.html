@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block meta_description %}{{ post.excerpt or post.title }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_image %}{{ post.cover_image_url or (base_url ~ '/static/img/og-default.png') }}{% endblock %}
+{% block structured_data %}
+<script type="application/ld+json">{{ article_jsonld(post, canonical_url, base_url)|tojson }}</script>
+<script type="application/ld+json">{{ breadcrumb_jsonld([('Home', base_url ~ '/'), ('Blog', base_url ~ '/blog'), (post.title, canonical_url)])|tojson }}</script>
+{% endblock %}
+{% block content %}
+<article class="blog-article">
+  <p class="blog-back"><a href="/blog">← All posts</a></p>
+  <h1>{{ post.title }}</h1>
+  <p class="blog-article-meta">
+    {% if post.published_at %}{{ post.published_at|pretty_date }} · {% endif %}{{ post.author }}
+    {% if post.status.value == 'draft' %}· <span class="blog-draft-tag">Draft preview</span>{% endif %}
+  </p>
+  {% if post.cover_image_url %}
+  <div class="blog-cover"><img src="{{ post.cover_image_url }}" alt=""></div>
+  {% endif %}
+  <div class="blog-body">{{ post.body_html|safe }}</div>
+  <div class="blog-cta">
+    <p>See exactly how long your next binge will take.</p>
+    <a class="btn" href="/shows">Browse the catalog</a>
+    <a class="btn btn-secondary" href="/calculator">Open the calculator</a>
+  </div>
+</article>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block page_title %}Blog — binge guides & watch-time lists{% endblock %}
+{% block meta_description %}Weekend binge lists, watch-time guides, and data on how long your favorite shows really take — from the team behind BingeTime.{% endblock %}
+{% block content %}
+<section class="blog-head">
+  <h1>The BingeTime Blog</h1>
+  <p class="lede">Watch-time guides, weekend binge lists, and the data behind how long your next obsession really takes.</p>
+</section>
+
+{% if posts %}
+<div class="blog-grid">
+  {% for post in posts %}
+  <a class="blog-card" href="/blog/{{ post.id }}">
+    {% if post.cover_image_url %}
+    <div class="blog-card-cover"><img src="{{ post.cover_image_url }}" alt="" loading="lazy"></div>
+    {% endif %}
+    <div class="blog-card-body">
+      <h2>{{ post.title }}</h2>
+      {% if post.excerpt %}<p class="blog-card-excerpt">{{ post.excerpt }}</p>{% endif %}
+      <p class="blog-card-meta">{% if post.published_at %}{{ post.published_at|pretty_date }} · {% endif %}{{ post.author }}</p>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">No posts yet — check back soon.</p>
+{% endif %}
+{% endblock %}

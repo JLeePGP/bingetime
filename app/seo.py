@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from .config import settings
 from .database import get_db
-from .models import Category, Show
+from .models import BlogPost, Category, PostStatus, Show
 
 router = APIRouter()
 
@@ -96,6 +96,35 @@ def show_jsonld(show, url: str) -> dict:
     return data
 
 
+def article_jsonld(post, url: str, base_url: str) -> dict:
+    """Article schema for a blog post."""
+    base = base_url.rstrip("/")
+    data: dict = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": post.title,
+        "url": url,
+        "author": {"@type": "Organization", "name": post.author or "BingeTime"},
+        "publisher": {
+            "@type": "Organization",
+            "name": "BingeTime",
+            "logo": {
+                "@type": "ImageObject",
+                "url": base + "/static/img/og-default.png",
+            },
+        },
+    }
+    if post.excerpt:
+        data["description"] = post.excerpt
+    if post.cover_image_url:
+        data["image"] = post.cover_image_url
+    if post.published_at:
+        data["datePublished"] = post.published_at.isoformat()
+    if post.updated_at:
+        data["dateModified"] = post.updated_at.isoformat()
+    return data
+
+
 # --- robots.txt + sitemap.xml --------------------------------------------
 
 
@@ -124,10 +153,19 @@ def sitemap(db: Session = Depends(get_db)) -> Response:
         (f"{base}/calculator", "monthly", "0.6"),
         (f"{base}/planner", "monthly", "0.6"),
         (f"{base}/stories", "weekly", "0.6"),
+        (f"{base}/blog", "weekly", "0.7"),
     ]
     # Category landing pages ("anime binge times", etc.).
     for cat in Category:
         entries.append((f"{base}/shows?category={cat.value}", "weekly", "0.7"))
+    # Published blog posts.
+    published = (
+        select(BlogPost.id)
+        .where(BlogPost.status == PostStatus.published)
+        .order_by(BlogPost.id)
+    )
+    for slug in db.execute(published).scalars():
+        entries.append((f"{base}/blog/{slug}", "monthly", "0.6"))
     # Every show-detail page — the bulk of indexable content.
     for sid in db.execute(select(Show.id).order_by(Show.id)).scalars():
         entries.append((f"{base}/shows/{sid}", "weekly", "0.8"))

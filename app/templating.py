@@ -11,6 +11,7 @@ from .config import settings
 from .embeds import build_embed
 from .security import is_admin, session_user
 from .seo import (
+    article_jsonld,
     breadcrumb_jsonld,
     organization_jsonld,
     show_jsonld,
@@ -83,6 +84,7 @@ templates.env.globals["website_jsonld"] = website_jsonld
 templates.env.globals["organization_jsonld"] = organization_jsonld
 templates.env.globals["breadcrumb_jsonld"] = breadcrumb_jsonld
 templates.env.globals["show_jsonld"] = show_jsonld
+templates.env.globals["article_jsonld"] = article_jsonld
 
 
 def humanize_count(value: int | None) -> str:
@@ -130,6 +132,14 @@ def status_label(value: str | None) -> str | None:
     return _STATUS_LABELS.get(value, value)
 
 
+def pretty_date(value) -> str:
+    """A datetime/date -> 'Jul 4, 2026'. Avoids platform-specific strftime
+    codes (%-d / %#d) so it renders the same on Windows dev and Linux prod."""
+    if not value:
+        return ""
+    return f"{value:%b} {value.day}, {value.year}"
+
+
 # UserShowStatus value -> friendly watch-state label.
 _WATCH_STATE_LABELS = {
     "watchlist": "Plan to watch",
@@ -148,3 +158,4 @@ templates.env.filters["humanize_runtime"] = humanize_runtime
 templates.env.filters["category_label"] = category_label
 templates.env.filters["status_label"] = status_label
 templates.env.filters["watch_state_label"] = watch_state_label
+templates.env.filters["pretty_date"] = pretty_date
