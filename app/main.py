@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
+from . import seo
 from .config import settings
 from .routers import accounts, calculator, catalog, feedback, planner, stories
 from .templating import templates
@@ -30,6 +31,7 @@ app.include_router(planner.router)
 app.include_router(stories.router)
 app.include_router(feedback.router)
 app.include_router(accounts.router)
+app.include_router(seo.router)
 
 
 @app.middleware("http")

@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 {% block meta_description %}How long to binge {{ show.title }}? {{ show.computed_runtime_min|humanize_runtime }} of runtime{% if show.seasons %} across {{ show.seasons }} seasons{% endif %}. Watch the video breakdown and plan your binge.{% endblock %}
+{% block og_type %}{{ 'video.movie' if show.category.value == 'movie' else 'video.tv_show' }}{% endblock %}
+{% block og_image %}{{ show.poster_url or (base_url ~ '/static/img/og-default.png') }}{% endblock %}
+{% block structured_data %}
+<script type="application/ld+json">{{ show_jsonld(show, canonical_url)|tojson }}</script>
+<script type="application/ld+json">{{ breadcrumb_jsonld([('Home', base_url ~ '/'), ('Catalog', base_url ~ '/shows'), (show.title, canonical_url)])|tojson }}</script>
+{% endblock %}
 {% block content %}
 <article class="show-detail">
   <div class="show-hero">

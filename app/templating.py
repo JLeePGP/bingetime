@@ -10,6 +10,12 @@ from starlette.requests import Request
 from .config import settings
 from .embeds import build_embed
 from .security import is_admin, session_user
+from .seo import (
+    breadcrumb_jsonld,
+    organization_jsonld,
+    show_jsonld,
+    website_jsonld,
+)
 from .services.calculator import _humanize_duration
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
@@ -45,10 +51,38 @@ def _inject_user(request: Request) -> dict:
     return {"current_user": user, "is_admin": is_admin(user)}
 
 
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR), context_processors=[_inject_user])
+def _inject_seo(request: Request) -> dict:
+    """Per-request SEO context: the canonical production origin, a canonical
+    URL for this page, and whether it should be excluded from the index.
+
+    Canonicals are built from `settings.base_url` (never the request host) and
+    keep only meaningful params — the category filter is a real landing page;
+    search (`q`) and pagination are dropped to consolidate duplicates.
+    """
+    base = settings.base_url.rstrip("/")
+    path = request.url.path
+    canonical = base + path
+    category = request.query_params.get("category")
+    if path == "/shows" and category:
+        canonical = f"{base}/shows?category={category}"
+    noindex = (
+        path.startswith("/account")
+        or path == "/feedback"
+        or (path == "/shows" and bool(request.query_params.get("q")))
+    )
+    return {"base_url": base, "canonical_url": canonical, "robots_noindex": noindex}
+
+
+templates = Jinja2Templates(
+    directory=str(TEMPLATES_DIR), context_processors=[_inject_user, _inject_seo]
+)
 templates.env.globals["build_embed"] = build_embed
 templates.env.globals["clarity_project_id"] = settings.clarity_project_id
 templates.env.globals["asset"] = asset_url
+templates.env.globals["website_jsonld"] = website_jsonld
+templates.env.globals["organization_jsonld"] = organization_jsonld
+templates.env.globals["breadcrumb_jsonld"] = breadcrumb_jsonld
+templates.env.globals["show_jsonld"] = show_jsonld
 
 
 def humanize_count(value: int | None) -> str:

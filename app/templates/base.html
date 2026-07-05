@@ -5,6 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block page_title %}{{ title }}{% endblock %} · BingeTime</title>
   <meta name="description" content="{% block meta_description %}Find out how long it takes to binge any show, watch the original viral breakdown, and plan your watch schedule.{% endblock %}">
+  <link rel="canonical" href="{{ canonical_url }}">
+  <meta name="robots" content="{% if robots_noindex %}noindex, follow{% else %}index, follow{% endif %}">
+
+  <!-- Open Graph / Twitter (reuse the title + description blocks above) -->
+  <meta property="og:site_name" content="BingeTime">
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  <meta property="og:title" content="{{ self.page_title() }} · BingeTime">
+  <meta property="og:description" content="{{ self.meta_description() }}">
+  <meta property="og:url" content="{{ canonical_url }}">
+  <meta property="og:image" content="{% block og_image %}{{ base_url }}/static/img/og-default.png{% endblock %}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ self.page_title() }} · BingeTime">
+  <meta name="twitter:description" content="{{ self.meta_description() }}">
+  <meta name="twitter:image" content="{{ self.og_image() }}">
+
+  <script type="application/ld+json">{{ website_jsonld(base_url)|tojson }}</script>
+  <script type="application/ld+json">{{ organization_jsonld(base_url)|tojson }}</script>
+  {% block structured_data %}{% endblock %}
+
   <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
   {% if clarity_project_id %}
   <script type="text/javascript">
