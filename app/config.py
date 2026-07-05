@@ -36,8 +36,10 @@ class Settings(BaseSettings):
     tmdb_base_url: str = "https://api.themoviedb.org/3"
     tmdb_image_base: str = "https://image.tmdb.org/t/p/w500"
 
-    # Public pages get this max-age (seconds) for CDN/browser caching.
+    # Static assets (versioned via content-hash query) get a long, immutable
+    # cache. HTML pages get a short cache so deploys propagate in minutes.
     public_cache_seconds: int = 300
+    page_cache_seconds: int = 300
 
     # Comma-separated emails allowed into the story-moderation queue.
     admin_emails: str = ""

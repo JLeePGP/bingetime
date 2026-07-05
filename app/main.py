@@ -34,21 +34,24 @@ app.include_router(accounts.router)
 
 @app.middleware("http")
 async def public_cache_headers(request: Request, call_next):
-    """Let a CDN/browser cache public GET pages; never cache the app layer.
+    """Let a CDN/browser cache public GET responses; never cache the app layer.
 
-    Anything under /account (added in the auth phase) and all non-GET
+    Static assets carry a content-hash query (see `asset_url`), so they can be
+    cached long and immutable — a changed file always has a new URL. HTML pages
+    get a short cache so a deploy's new markup (and its new asset URLs) reaches
+    users in minutes instead of hours. Anything under /account and all non-GET
     requests are always private.
     """
     response = await call_next(request)
-    is_cacheable = (
-        request.method == "GET"
-        and not request.url.path.startswith("/account")
-        and not request.url.path.startswith("/api/")
-        and response.status_code == 200
-    )
-    if is_cacheable:
+    if request.method != "GET" or response.status_code != 200:
+        return response
+    if request.url.path.startswith("/static/"):
         response.headers.setdefault(
-            "Cache-Control", f"public, max-age={settings.public_cache_seconds}"
+            "Cache-Control", "public, max-age=31536000, immutable"
+        )
+    elif not request.url.path.startswith(("/account", "/api/")):
+        response.headers.setdefault(
+            "Cache-Control", f"public, max-age={settings.page_cache_seconds}"
         )
     return response
 

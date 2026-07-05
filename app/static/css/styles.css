@@ -250,10 +250,13 @@ button:active, .btn:active { transform: translateY(1px); }
   background: var(--surface); border-left: 1px solid var(--border);
   padding: 16px 20px calc(20px + env(safe-area-inset-bottom));
   display: flex; flex-direction: column; gap: 18px;
-  transform: translateX(100%); transition: transform .25s ease;
+  transform: translateX(100%); transition: transform .25s ease, visibility .25s;
   overflow-y: auto;
+  /* Hidden (not just off-screen) when closed so an off-canvas element can
+     never add to the page width — a horizontal-scroll gotcha on iOS Safari. */
+  visibility: hidden;
 }
-.mobile-drawer.is-open { transform: translateX(0); }
+.mobile-drawer.is-open { transform: translateX(0); visibility: visible; }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; }
 .drawer-close { background: none; border: none; color: var(--muted); font-size: 2rem; line-height: 1; padding: 4px 8px; width: 44px; height: 44px; }
 .drawer-close:hover { color: var(--text); opacity: 1; }

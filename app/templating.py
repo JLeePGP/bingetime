@@ -1,6 +1,7 @@
 """Shared Jinja2 environment and template filters."""
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
@@ -12,6 +13,29 @@ from .security import is_admin, session_user
 from .services.calculator import _humanize_duration
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
+STATIC_DIR = Path(__file__).parent / "static"
+
+_asset_hashes: dict[str, str] = {}
+
+
+def asset_url(path: str) -> str:
+    """Cache-busting static URL: 'css/styles.css' -> '/static/css/styles.css?v=<hash>'.
+
+    The query is an 8-char content hash, computed once per process (i.e. per
+    deploy). Because the URL changes whenever the file's bytes change, a browser
+    or CDN can cache the asset forever yet always fetch a new version after a
+    deploy — this is what prevents new HTML from loading a stale stylesheet.
+    """
+    rel = path.lstrip("/")
+    if rel.startswith("static/"):
+        rel = rel[len("static/"):]
+    if rel not in _asset_hashes:
+        try:
+            digest = hashlib.md5((STATIC_DIR / rel).read_bytes()).hexdigest()[:8]
+        except OSError:
+            digest = "0"
+        _asset_hashes[rel] = digest
+    return f"/static/{rel}?v={_asset_hashes[rel]}"
 
 
 def _inject_user(request: Request) -> dict:
@@ -24,6 +48,7 @@ def _inject_user(request: Request) -> dict:
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR), context_processors=[_inject_user])
 templates.env.globals["build_embed"] = build_embed
 templates.env.globals["clarity_project_id"] = settings.clarity_project_id
+templates.env.globals["asset"] = asset_url
 
 
 def humanize_count(value: int | None) -> str:

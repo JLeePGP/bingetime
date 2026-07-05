@@ -126,9 +126,9 @@
 
 {% block body_extra %}
   {% if show.total_runtime_min %}
-    <script src="/static/js/tabs.js"></script>
-    <script src="/static/js/calculator.js"></script>
-    <script src="/static/js/planner.js"></script>
+    <script src="{{ asset('js/tabs.js') }}"></script>
+    <script src="{{ asset('js/calculator.js') }}"></script>
+    <script src="{{ asset('js/planner.js') }}"></script>
   {% endif %}
   {% if show.has_creator_video and show.videos %}
     {% set platform = show.videos[0].platform.value %}
