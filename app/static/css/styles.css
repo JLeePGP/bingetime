@@ -224,3 +224,125 @@ button:active, .btn:active { transform: translateY(1px); }
 .footer-links a { color: var(--muted); }
 .footer-links a:hover { color: var(--text); }
 .notfound { padding: 80px 0; text-align: center; }
+
+/* ============================================================
+   Mobile navigation drawer + hamburger
+   Hidden on desktop; activated by the mobile breakpoint below.
+   ============================================================ */
+.nav-toggle {
+  display: none; /* shown only on mobile */
+  background: none; border: none; padding: 8px; margin-left: auto;
+  width: 44px; height: 44px; border-radius: 10px;
+  flex-direction: column; justify-content: center; gap: 5px; cursor: pointer;
+}
+.nav-toggle:hover { background: var(--surface-2); opacity: 1; }
+.nav-toggle-bar { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; }
+
+.nav-backdrop {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(0,0,0,.55); opacity: 0; transition: opacity .25s ease;
+}
+.nav-backdrop.is-open { opacity: 1; }
+
+.mobile-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 50;
+  width: min(82vw, 340px);
+  background: var(--surface); border-left: 1px solid var(--border);
+  padding: 16px 20px calc(20px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 18px;
+  transform: translateX(100%); transition: transform .25s ease;
+  overflow-y: auto;
+}
+.mobile-drawer.is-open { transform: translateX(0); }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; }
+.drawer-close { background: none; border: none; color: var(--muted); font-size: 2rem; line-height: 1; padding: 4px 8px; width: 44px; height: 44px; }
+.drawer-close:hover { color: var(--text); opacity: 1; }
+.drawer-search input { width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 12px 14px; font-size: 16px; }
+.drawer-nav { display: flex; flex-direction: column; }
+.drawer-nav a { color: var(--text); font-weight: 600; font-size: 1.05rem; padding: 14px 4px; border-bottom: 1px solid var(--border); }
+.drawer-nav a:hover { color: var(--accent); }
+.drawer-account { display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
+.drawer-account .btn { text-align: center; }
+.drawer-account a:not(.btn) { color: var(--text); font-weight: 600; padding: 6px 4px; }
+body.nav-open { overflow: hidden; }
+
+/* ============================================================
+   Mobile layout — everything below 768px.
+   Desktop styles above are left untouched.
+   ============================================================ */
+@media (max-width: 768px) {
+  html, body { overflow-x: hidden; }
+  .wrap { padding: 0 16px; }
+
+  /* Header: collapse to brand + hamburger */
+  .header-inner { gap: 12px; height: 56px; }
+  .nav, .nav-search, .nav-account { display: none; }
+  .nav-toggle { display: flex; }
+
+  /* Hero */
+  .hero { padding: 36px 0 20px; }
+  .lede { font-size: 1rem; }
+  .hero-search form { flex-direction: column; align-items: stretch; }
+  .hero-search input { min-width: 0; max-width: none; width: 100%; font-size: 16px; }
+  .hero-search button { width: 100%; }
+
+  /* Cards grid: two-up */
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+
+  /* Catalog filters stack full-width */
+  .filters { flex-direction: column; align-items: stretch; }
+  .filters input, .filters select, .filters button { width: 100%; font-size: 16px; }
+
+  /* Show detail: poster on top, single column */
+  .show-hero { flex-direction: column; gap: 20px; }
+  .poster-lg { max-width: 200px; margin: 0 auto; }
+  .show-hero-info { min-width: 0; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 20px; }
+  .cta-row { flex-direction: column; align-items: stretch; }
+  .track-form { flex-direction: column; align-items: stretch; }
+  .track-form label, .track-form select, .track-form input { width: 100%; }
+  .track-form input[type="number"] { width: 100%; }
+  .cta-row .btn, .track-form .btn { width: 100%; text-align: center; }
+
+  /* Video breakdown full-width */
+  .video-grid { grid-template-columns: 1fr; }
+  .video-card-solo { max-width: none; }
+  .video-embed { max-height: 70vh; }
+
+  /* Tools: calculator + planner */
+  .tool-page { padding: 24px 0 48px; }
+  .calc, .planner { padding: 18px; }
+  .calc-inputs { flex-direction: column; }
+  .calc-inputs label, .calc-inputs input, .calc-inputs select { width: 100%; min-width: 0; font-size: 16px; }
+  .calc-fixed { align-self: stretch; }
+  .calc-units { gap: 18px; }
+  .tabs { overflow-x: auto; }
+  .tab { padding: 10px 14px; white-space: nowrap; }
+
+  /* Story form + inputs full-width */
+  .story-form textarea, .story-form input, .story-form select { font-size: 16px; }
+  .story-form button { align-self: stretch; }
+
+  /* Auth forms */
+  .auth-form input { font-size: 16px; }
+  .auth-form button { align-self: stretch; }
+
+  /* Account dashboard */
+  .dashboard-head { flex-direction: column; align-items: stretch; }
+  .stat-hero { text-align: left; }
+  .dash-row { flex-direction: column; align-items: stretch; }
+  .dash-actions { justify-content: space-between; }
+  .dash-actions select { flex: 1; font-size: 16px; }
+  .planner-save { flex-direction: column; align-items: stretch; }
+  .planner-save input, .planner-save button { width: 100%; font-size: 16px; }
+
+  /* Footer */
+  .footer-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
+/* Narrow phones: single-column card grid */
+@media (max-width: 480px) {
+  .grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .hero h1 { font-size: 1.6rem; }
+  .stats { grid-template-columns: 1fr 1fr; }
+}
