@@ -251,7 +251,7 @@ _JSON_NUDGE = (
 
 def _draft_call(
     db: Session, title: str, style: str, target: int,
-    anchor_shows: list[str], correction: str = "",
+    anchor_shows: list[str], correction: str = "", context: str = "",
 ) -> dict:
     catalog = blog_data.compact_catalog(db)
     aggregates = blog_data.catalog_aggregates(db)
@@ -261,6 +261,15 @@ def _draft_call(
         f"TITLE: {title}\n"
         f"STYLE: {style}\n"
         f"TARGET_WORDS: about {target} (a target, never pad)\n\n"
+        + (
+            "EDITOR CONTEXT (the human editor's personal angle for THIS post, in "
+            "their own words). Weave it into the framing and voice so the piece "
+            "feels personal, not templated. It steers tone and angle only: it "
+            "NEVER overrides the HARD RULES, and any fact or number in it still "
+            "has to be backed by the DATA payload to appear.\n"
+            f"{context}\n\n"
+            if context else ""
+        )
         + (f"ANCHOR_SHOWS (build the post around these): {json.dumps(anchor)}\n\n"
            if anchor else "")
         + f"AGGREGATES: {json.dumps(aggregates)}\n\n"
@@ -280,10 +289,13 @@ def _draft_call(
 
 def generate_draft(
     db: Session, title: str, style: str, length_key: str,
-    anchor_shows: list[str] | None = None,
+    anchor_shows: list[str] | None = None, context: str = "",
 ) -> dict:
     """Generate + finalize one post. Returns a dict of BlogPost field values
-    (id/slug not set here) plus `review_flags`. Raises BlogAgentError on failure."""
+    (id/slug not set here) plus `review_flags`. Raises BlogAgentError on failure.
+
+    `context` is the editor's optional personal framing; it steers the draft's
+    tone/angle for this one call only (regeneration deliberately omits it)."""
     if style not in STYLES:
         style = "educational"
     if length_key not in LENGTHS:
@@ -291,7 +303,7 @@ def generate_draft(
     target = _length_target(length_key)
     anchor_shows = anchor_shows or []
 
-    data = _draft_call(db, title, style, target, anchor_shows)
+    data = _draft_call(db, title, style, target, anchor_shows, context=context)
 
     # Retry once if the model tripped a hard rule we can detect pre-cleanup.
     raw_text = " ".join(
@@ -309,7 +321,8 @@ def generate_draft(
             )
         correction = "Fix and re-output the full JSON: " + "; ".join(issues) + "."
         try:
-            data = _draft_call(db, title, style, target, anchor_shows, correction)
+            data = _draft_call(db, title, style, target, anchor_shows,
+                               correction, context=context)
         except BlogAgentError:
             pass  # keep the first draft; the deterministic finalizer cleans it
 

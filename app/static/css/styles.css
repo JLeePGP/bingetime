@@ -312,7 +312,12 @@ button:active, .btn:active { transform: translateY(1px); }
 
 .regen { flex-direction: row !important; align-items: center; flex-wrap: wrap; gap: 10px !important; margin-bottom: 16px; }
 .regen select { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; }
-.cover-preview { max-width: 320px; border-radius: 10px; border: 1px solid var(--border); margin: -4px 0 4px; }
+/* 16:9 box so the preview crops exactly like the .blog-card-cover thumbnail,
+   letting the vertical-position slider show the real framing. */
+.cover-preview { width: 320px; max-width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); margin: -4px 0 4px; background: var(--surface-2); }
+.cover-position { display: flex; flex-direction: column; gap: 4px; margin: 8px 0 10px; max-width: 320px; }
+.cover-position label { display: flex; align-items: center; gap: 10px; font-size: .9rem; color: var(--muted); }
+.cover-position input[type="range"] { flex: 1; }
 .advanced-json summary { cursor: pointer; font-weight: 600; color: var(--muted); }
 
 /* Blog post: AEO lead + FAQ */

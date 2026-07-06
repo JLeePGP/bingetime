@@ -128,7 +128,8 @@ def _attach_covers(db: Session, post: BlogPost, cover_slug: str | None,
     poster_urls = _poster_urls(db, cover_slug, cited)
     category = _category_for(db, cover_slug, cited)
     imgs = covers.render_post_images(
-        post.id, post.title, post.kicker, category, poster_urls
+        post.id, post.title, post.kicker, category, poster_urls,
+        focus_y=post.cover_focus_y or 50,
     )
     if imgs.get("cover_image_url"):
         post.cover_image_url = imgs["cover_image_url"]
@@ -143,6 +144,7 @@ def _form_values(**kw) -> dict:
     base = {
         "title": "", "slug": "", "excerpt": "", "tldr": "", "body_html": "",
         "cover_image_url": "", "share_image_url": "", "kicker": "",
+        "cover_focus_y": 50,
         "list_items_json": "", "faq_json": "", "author": "BingeTime",
         "status": PostStatus.draft.value, "publish_at": "",
     }
@@ -161,6 +163,7 @@ def _values_of(post: BlogPost) -> dict:
         cover_image_url=post.cover_image_url or "",
         share_image_url=post.share_image_url or "",
         kicker=post.kicker or "",
+        cover_focus_y=post.cover_focus_y,
         list_items_json=json.dumps(post.list_items, indent=2) if post.list_items else "",
         faq_json=json.dumps(post.faq, indent=2) if post.faq else "",
         author=post.author,
@@ -251,12 +254,14 @@ def generate_post(
     style: str = Form(default="educational"),
     length: str = Form(default="medium"),
     shows: str = Form(default=""),  # optional CSV of anchor slugs from a suggestion
+    context: str = Form(default=""),  # optional personal framing for this draft only
 ):
     if (deny := _admin_guard(request)) is not None:
         return deny
     # Headline-case a hand-typed title so it reads like an auto-generated one.
     title = blog_lint.headline_case(title)
-    form = {"title": title, "style": style, "length": length}
+    context = context.strip()
+    form = {"title": title, "style": style, "length": length, "context": context}
     if not settings.blog_agent_enabled:
         return _render_list(request, db, error="Content agent isn't configured.",
                             form=form)
@@ -265,7 +270,8 @@ def generate_post(
                             form=form)
     anchor = [s.strip() for s in shows.split(",") if s.strip()]
     try:
-        fields = blog_agent.generate_draft(db, title, style, length, anchor_shows=anchor)
+        fields = blog_agent.generate_draft(db, title, style, length,
+                                           anchor_shows=anchor, context=context)
     except blog_agent.BlogAgentError as e:
         return _render_list(request, db, error=f"Generation failed: {e}", form=form)
 
@@ -340,6 +346,7 @@ def rebuild_cover(
     db: Session = Depends(get_db),
     cover_show: str = Form(default=""),
     kicker: str = Form(default=""),
+    cover_focus_y: int = Form(default=50),
 ):
     """Recompose just the cover + OG image from a chosen show's poster (no LLM),
     so a bad auto-pick is a one-click fix."""
@@ -352,6 +359,8 @@ def rebuild_cover(
         )
     if kicker.strip():
         post.kicker = kicker.strip()[:40]
+    # Set the focal point before recomposing so the new crop honors it.
+    post.cover_focus_y = max(0, min(100, cover_focus_y))
     slug = cover_show.strip() or None
     cited = (post.gen_meta or {}).get("shows_cited") or []
     # A specific pick → a single hero poster; otherwise the post's cited shows.
@@ -449,6 +458,7 @@ def update_post(
     cover_image_url: str = Form(default=""),
     share_image_url: str = Form(default=""),
     kicker: str = Form(default=""),
+    cover_focus_y: int = Form(default=50),
     list_items_json: str = Form(default=""),
     faq_json: str = Form(default=""),
     author: str = Form(default="BingeTime"),
@@ -464,10 +474,12 @@ def update_post(
         )
 
     title = title.strip()
+    cover_focus_y = max(0, min(100, cover_focus_y))
     values = _form_values(
         title=title, slug=slug or post.id, excerpt=excerpt, tldr=tldr,
         body_html=body_html, cover_image_url=cover_image_url,
         share_image_url=share_image_url, kicker=kicker,
+        cover_focus_y=cover_focus_y,
         list_items_json=list_items_json, faq_json=faq_json, author=author,
         status=status, publish_at=publish_at,
     )
@@ -498,6 +510,7 @@ def update_post(
     post.body_html = body_html
     post.cover_image_url = cover_image_url.strip() or None
     post.share_image_url = share_image_url.strip() or None
+    post.cover_focus_y = cover_focus_y
     post.kicker = blog_lint.clean_text(kicker) or None
     post.list_items = _parse_json_field(list_items_json)
     post.faq = _parse_json_field(faq_json)

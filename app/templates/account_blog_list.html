@@ -59,6 +59,9 @@
             {% for l in lengths %}<option value="{{ l }}"{{ ' selected' if l == (form.length or 'medium') else '' }}>{{ l }}</option>{% endfor %}
           </select>
         </label>
+        <label>Context / notes (optional)
+          <textarea name="context" rows="3" maxlength="1000" placeholder="Your personal angle: a hot take, a memory, how to frame it. Steers tone only — facts still come from the catalog. Used for this draft only.">{{ form.context or '' }}</textarea>
+        </label>
         <button type="submit">Draft it →</button>
       </form>
     </details>

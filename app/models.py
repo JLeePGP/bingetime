@@ -179,6 +179,13 @@ class BlogPost(Base):
     tldr: Mapped[str | None] = mapped_column(Text, nullable=True)
     body_html: Mapped[str] = mapped_column(Text, nullable=False)
     cover_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Vertical focal point (0=top … 100=bottom, 50=center) so the subject isn't
+    # cropped out of the thumbnail. Drives the Pillow crop anchor when a cover is
+    # regenerated from a poster, and CSS object-position when a cover is a pasted
+    # (already-final) image the browser center-crops into the card frame.
+    cover_focus_y: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=50, server_default="50"
+    )
     # Title-bearing OG/social card (distinct from the imagery-only on-site cover).
     share_image_url: Mapped[str | None] = mapped_column(String, nullable=True)
     # Short cover label (e.g. "WEEKEND BINGE") — a design element, not the title.

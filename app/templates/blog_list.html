@@ -11,7 +11,7 @@
   {% for post in posts %}
   <a class="blog-card" href="/blog/{{ post.id }}">
     {% if post.cover_image_url %}
-    <div class="blog-card-cover"><img src="{{ post.cover_image_url }}" alt="" loading="lazy"></div>
+    <div class="blog-card-cover"><img src="{{ post.cover_image_url }}" alt="" loading="lazy" style="object-position: 50% {{ post.cover_focus_y }}%;"></div>
     {% endif %}
     <div class="blog-card-body">
       <h2>{{ post.title }}</h2>

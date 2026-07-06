@@ -56,19 +56,23 @@ def _fetch_poster(url: str | None) -> Image.Image | None:
         return None
 
 
-def _cover_fit(img: Image.Image, size: tuple[int, int]) -> Image.Image:
-    """Resize + center-crop to fill `size` (object-fit: cover)."""
+def _cover_fit(img: Image.Image, size: tuple[int, int],
+               focus_y: int = 50) -> Image.Image:
+    """Resize + crop to fill `size` (object-fit: cover), anchoring the vertical
+    crop at focus_y (0=top … 100=bottom, 50=center) so the subject survives the
+    portrait→landscape squeeze."""
     tw, th = size
     iw, ih = img.size
     scale = max(tw / iw, th / ih)
     nw, nh = int(iw * scale), int(ih * scale)
     img = img.resize((nw, nh), Image.LANCZOS)
-    left, top = (nw - tw) // 2, (nh - th) // 2
+    left = (nw - tw) // 2
+    top = int((nh - th) * (max(0, min(100, focus_y)) / 100))
     return img.crop((left, top, left + tw, top + th))
 
 
 def _backdrop(size: tuple[int, int], posters: list[Image.Image],
-              tint: tuple[int, int, int]) -> Image.Image:
+              tint: tuple[int, int, int], focus_y: int = 50) -> Image.Image:
     """Poster hero / collage under a dark gradient, or a brand gradient."""
     w, h = size
     base = Image.new("RGB", size, _BG_TOP)
@@ -78,9 +82,9 @@ def _backdrop(size: tuple[int, int], posters: list[Image.Image],
         cells = posters[:3]
         cw = w // len(cells)
         for i, p in enumerate(cells):
-            base.paste(_cover_fit(p, (cw, h)), (i * cw, 0))
+            base.paste(_cover_fit(p, (cw, h), focus_y), (i * cw, 0))
     elif posters:
-        base.paste(_cover_fit(posters[0], size), (0, 0))
+        base.paste(_cover_fit(posters[0], size, focus_y), (0, 0))
     else:
         # Brand gradient: dark top → tinted dark bottom.
         grad = Image.new("RGB", (1, h))
@@ -132,10 +136,11 @@ def _save(img: Image.Image, name: str) -> str:
 
 def render_post_images(
     slug: str, title: str, kicker: str | None, category: str | None,
-    poster_urls: list[str],
+    poster_urls: list[str], focus_y: int = 50,
 ) -> dict:
     """Compose + save both images. Returns {cover_image_url, share_image_url};
-    a value is None only if Pillow itself fails."""
+    a value is None only if Pillow itself fails. focus_y (0-100) sets the
+    vertical crop anchor for the poster art."""
     tint = _tint(category)
     posters = [p for p in (_fetch_poster(u) for u in poster_urls[:3]) if p]
     kicker = (kicker or (category or "").upper() or "BINGETIME").strip()[:24]
@@ -143,7 +148,7 @@ def render_post_images(
 
     # --- On-site cover (imagery only, no title) ---
     try:
-        img = _backdrop(COVER_SIZE, posters, tint)
+        img = _backdrop(COVER_SIZE, posters, tint, focus_y)
         d = ImageDraw.Draw(img)
         _brand_mark(d, 44, 40)
         # Tint bar + kicker, bottom-left.
@@ -156,7 +161,7 @@ def render_post_images(
 
     # --- OG share card (title-bearing) ---
     try:
-        img = _backdrop(SHARE_SIZE, posters, tint)
+        img = _backdrop(SHARE_SIZE, posters, tint, focus_y)
         d = ImageDraw.Draw(img)
         _brand_mark(d, 48, 44)
         d.text((48, 96), kicker, font=_font(28), fill=tint)

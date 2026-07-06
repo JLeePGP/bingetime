@@ -38,9 +38,20 @@
     {% else %}
     <input type="text" name="cover_show" placeholder="show slug, e.g. the-simpsons">
     {% endif %}
+    <input type="hidden" name="cover_focus_y" data-focus-mirror value="{{ values.cover_focus_y }}">
     <button type="submit">Rebuild cover</button>
   </form>
-  {% if values.cover_image_url %}<img class="cover-preview" src="{{ values.cover_image_url }}" alt="cover preview">{% endif %}
+
+  <div class="cover-position">
+    <label for="cover-focus">Vertical position
+      <input type="range" id="cover-focus" min="0" max="100" step="1" value="{{ values.cover_focus_y }}">
+    </label>
+    <span class="hint">Drag to reframe the thumbnail. Pasted images move live; poster-based covers apply on "Rebuild cover" (or Save changes).</span>
+  </div>
+  {% if values.cover_image_url %}
+  <img class="cover-preview" src="{{ values.cover_image_url }}" alt="cover preview"
+       style="object-position: 50% {{ values.cover_focus_y }}%;">
+  {% endif %}
   {% endif %}
 
   <div class="story-form">
@@ -78,8 +89,9 @@
 
       <label>Cover image URL (on-site thumbnail — imagery, no title)
         <input type="text" name="cover_image_url" maxlength="500" value="{{ values.cover_image_url }}">
-        <small>Use "Rebuild cover" above to regenerate from a show, or paste any image URL here.</small>
+        <small>Use "Rebuild cover" above to regenerate from a show, or paste any image URL here. Vertical position is set by the slider above.</small>
       </label>
+      <input type="hidden" name="cover_focus_y" data-focus-mirror value="{{ values.cover_focus_y }}">
 
       <label>Share image URL (title-bearing OG/social card)
         <input type="text" name="share_image_url" maxlength="500" value="{{ values.share_image_url }}">
@@ -134,5 +146,21 @@
       if (b) { b.disabled = true; b.textContent = 'Working…'; }
     });
   });
+
+  // Cover vertical-position slider: mirror its value into every form that
+  // saves it (main edit + rebuild) and pan the live preview so pasted images
+  // reframe instantly. Generated covers re-crop server-side on submit.
+  (function () {
+    var slider = document.getElementById('cover-focus');
+    if (!slider) return;
+    var mirrors = document.querySelectorAll('[data-focus-mirror]');
+    var preview = document.querySelector('.cover-preview');
+    function sync() {
+      mirrors.forEach(function (m) { m.value = slider.value; });
+      if (preview) { preview.style.objectPosition = '50% ' + slider.value + '%'; }
+    }
+    slider.addEventListener('input', sync);
+    sync();
+  })();
 </script>
 {% endblock %}
