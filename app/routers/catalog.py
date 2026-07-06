@@ -24,19 +24,27 @@ router = APIRouter()
 
 PAGE_SIZE = 24
 
-# Total-runtime buckets (minutes) for the length filter, plus their labels.
-LENGTH_RANGES: dict[str, tuple[int, int | None]] = {
-    "short": (0, 300),        # under 5h
-    "weekend": (300, 1200),   # 5-20h
-    "long": (1200, 3600),     # 20-60h
-    "epic": (3600, None),     # 60h+
-}
-LENGTH_OPTIONS = [
-    ("short", "Under 5 hours"),
-    ("weekend", "5–20 hours"),
-    ("long", "20–60 hours"),
-    ("epic", "60+ hours"),
+# Catalog sort options (value -> label). Default is A-Z by title.
+SORT_OPTIONS = [
+    ("az", "A-Z"),
+    ("longest", "Longest"),
+    ("shortest", "Shortest"),
+    ("rated", "Highest rated"),
+    ("newest", "Newest"),
 ]
+
+
+def _order_by(sort: str):
+    """ORDER BY clause(s) for a sort value; title breaks ties."""
+    if sort == "longest":
+        return (Show.total_runtime_min.desc().nullslast(), Show.title.asc())
+    if sort == "shortest":
+        return (Show.total_runtime_min.asc().nullslast(), Show.title.asc())
+    if sort == "rated":
+        return (Show.tmdb_rating.desc().nullslast(), Show.title.asc())
+    if sort == "newest":
+        return (Show.release_year.desc().nullslast(), Show.title.asc())
+    return (Show.title.asc(),)
 
 
 @router.get("/")
@@ -86,7 +94,7 @@ def catalog(
     db: Session = Depends(get_db),
     q: str | None = Query(default=None, description="title search"),
     category: str | None = Query(default=None),
-    length: str | None = Query(default=None),
+    sort: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
 ):
     """Paginated, searchable, filterable show grid."""
@@ -103,15 +111,7 @@ def catalog(
         stmt = stmt.where(Show.category == valid_category)
         count_stmt = count_stmt.where(Show.category == valid_category)
 
-    # Length filter by total runtime (NULL runtimes fall out automatically).
-    valid_length = length if length in LENGTH_RANGES else None
-    if valid_length:
-        lo, hi = LENGTH_RANGES[valid_length]
-        stmt = stmt.where(Show.total_runtime_min >= lo)
-        count_stmt = count_stmt.where(Show.total_runtime_min >= lo)
-        if hi is not None:
-            stmt = stmt.where(Show.total_runtime_min < hi)
-            count_stmt = count_stmt.where(Show.total_runtime_min < hi)
+    valid_sort = sort if sort in {v for v, _ in SORT_OPTIONS} else "az"
 
     total = db.execute(count_stmt).scalar_one()
     total_pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
@@ -119,7 +119,7 @@ def catalog(
 
     shows = (
         db.execute(
-            stmt.order_by(Show.title.asc())
+            stmt.order_by(*_order_by(valid_sort))
             .offset((page - 1) * PAGE_SIZE)
             .limit(PAGE_SIZE)
         )
@@ -136,8 +136,8 @@ def catalog(
             "q": q or "",
             "category": valid_category or "",
             "categories": [c.value for c in Category],
-            "length": valid_length or "",
-            "length_options": LENGTH_OPTIONS,
+            "sort": valid_sort,
+            "sort_options": SORT_OPTIONS,
             "page": page,
             "total_pages": total_pages,
             "total": total,

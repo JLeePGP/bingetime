@@ -26,6 +26,8 @@ TITLE_OVERRIDES = {
 SEARCH_OVERRIDES: dict[str, str] = {
     "fate": "Fate/stay night",  # franchise anchor — see note in README
     "gundam": "Mobile Suit Gundam",  # the original 1979 series
+    # Bare "Misaeng" ranks a porn parody first on TMDB; use the English title.
+    "misaeng": "Incomplete Life",
 }
 
 _ARTICLES = ("the ", "a ", "an ")
