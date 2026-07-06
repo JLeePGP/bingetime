@@ -10,6 +10,12 @@
         <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c|category_label }}</option>
       {% endfor %}
     </select>
+    <select name="length" aria-label="Length">
+      <option value="">Any length</option>
+      {% for val, label in length_options %}
+        <option value="{{ val }}" {% if val == length %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
     <button type="submit">Filter</button>
   </form>
   <p class="result-count">{{ total }} show{{ '' if total == 1 else 's' }}</p>
@@ -24,9 +30,10 @@
   <nav class="pagination">
     {% set qs = "&q=" ~ q if q else "" %}
     {% set cs = "&category=" ~ category if category else "" %}
-    {% if page > 1 %}<a href="/shows?page={{ page - 1 }}{{ qs }}{{ cs }}">← Prev</a>{% endif %}
+    {% set ls = "&length=" ~ length if length else "" %}
+    {% if page > 1 %}<a href="/shows?page={{ page - 1 }}{{ qs }}{{ cs }}{{ ls }}">← Prev</a>{% endif %}
     <span>Page {{ page }} of {{ total_pages }}</span>
-    {% if page < total_pages %}<a href="/shows?page={{ page + 1 }}{{ qs }}{{ cs }}">Next →</a>{% endif %}
+    {% if page < total_pages %}<a href="/shows?page={{ page + 1 }}{{ qs }}{{ cs }}{{ ls }}">Next →</a>{% endif %}
   </nav>
   {% endif %}
 {% else %}

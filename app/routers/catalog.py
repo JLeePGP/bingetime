@@ -24,6 +24,20 @@ router = APIRouter()
 
 PAGE_SIZE = 24
 
+# Total-runtime buckets (minutes) for the length filter, plus their labels.
+LENGTH_RANGES: dict[str, tuple[int, int | None]] = {
+    "short": (0, 300),        # under 5h
+    "weekend": (300, 1200),   # 5-20h
+    "long": (1200, 3600),     # 20-60h
+    "epic": (3600, None),     # 60h+
+}
+LENGTH_OPTIONS = [
+    ("short", "Under 5 hours"),
+    ("weekend", "5–20 hours"),
+    ("long", "20–60 hours"),
+    ("epic", "60+ hours"),
+]
+
 
 @router.get("/")
 def home(request: Request, db: Session = Depends(get_db)):
@@ -72,6 +86,7 @@ def catalog(
     db: Session = Depends(get_db),
     q: str | None = Query(default=None, description="title search"),
     category: str | None = Query(default=None),
+    length: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
 ):
     """Paginated, searchable, filterable show grid."""
@@ -87,6 +102,16 @@ def catalog(
     if valid_category:
         stmt = stmt.where(Show.category == valid_category)
         count_stmt = count_stmt.where(Show.category == valid_category)
+
+    # Length filter by total runtime (NULL runtimes fall out automatically).
+    valid_length = length if length in LENGTH_RANGES else None
+    if valid_length:
+        lo, hi = LENGTH_RANGES[valid_length]
+        stmt = stmt.where(Show.total_runtime_min >= lo)
+        count_stmt = count_stmt.where(Show.total_runtime_min >= lo)
+        if hi is not None:
+            stmt = stmt.where(Show.total_runtime_min < hi)
+            count_stmt = count_stmt.where(Show.total_runtime_min < hi)
 
     total = db.execute(count_stmt).scalar_one()
     total_pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
@@ -111,6 +136,8 @@ def catalog(
             "q": q or "",
             "category": valid_category or "",
             "categories": [c.value for c in Category],
+            "length": valid_length or "",
+            "length_options": LENGTH_OPTIONS,
             "page": page,
             "total_pages": total_pages,
             "total": total,
